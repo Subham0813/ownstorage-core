@@ -1,0 +1,161 @@
+@tailwind base;  
+@tailwind components;  
+@tailwind utilities;  
+@layer base {  
+  :root {  
+    --background: 240 10% 3.9%;  
+    --foreground: 0 0% 98%;  
+    --card: 240 10% 3.9%;  
+    --card-foreground: 0 0% 98%;  
+    --popover: 240 10% 3.9%;  
+    --popover-foreground: 0 0% 98%;  
+    --primary: 142.1 70.6% 45.3%;  
+    --primary-foreground: 144.9 80.4% 10%;  
+    --secondary: 240 3.7% 15.9%;  
+    --secondary-foreground: 0 0% 98%;  
+    --muted: 240 3.7% 15.9%;  
+    --muted-foreground: 240 5% 64.9%;  
+    --accent: 240 3.7% 15.9%;  
+    --accent-foreground: 0 0% 98%;  
+    --destructive: 0 62.8% 30.6%;  
+    --destructive-foreground: 0 0% 98%;  
+    --border: 240 3.7% 15.9%;  
+    --input: 240 3.7% 15.9%;  
+    --ring: 142.1 70.6% 45.3%;  
+    --radius: 0.5rem;  
+  }  
+}  
+@layer base {  
+  * {  
+    @apply border-slate-200/80 dark:border-zinc-800/80;  
+  }  
+  body {  
+    @apply bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 text-sm leading-normal tracking-tight;  
+    font-family: "Inter", sans-serif;  
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-synthesis: none;
+  }  
+}  
+
+@layer utilities {
+  .no-transitions *,
+  .no-transitions *::before,
+  .no-transitions *::after {
+    transition: none !important;
+  }
+  .hide-scrollbar::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar,
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .glass-card {
+    @apply bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/60 shadow-lg shadow-slate-200/20 dark:shadow-black/40;
+  }
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500;
+  }
+  .card-hover {
+    @apply transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/40 dark:hover:shadow-black/40;
+  }
+
+  /* ── Dashboard visual upgrade ── */
+  .dashboard-bg {
+    background-color: #f8fafc;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 100%, rgba(139, 92, 246, 0.04) 0%, transparent 60%);
+  }
+  .dark .dashboard-bg {
+    background-color: #09090b;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(59, 130, 246, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 100%, rgba(139, 92, 246, 0.05) 0%, transparent 60%);
+  }
+
+  .section-label {
+    @apply text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* ── CSS-only entrance animations (replaces tailwindcss-animate) ── */
+@keyframes ai-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ai-zoomIn95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes ai-slideInFromTop1 {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ai-slideInFromTop2 {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ai-slideInFromTop3 {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ai-slideInFromBottom4 {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ai-fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-in { animation-fill-mode: both; }
+.fade-in { animation-name: ai-fadeIn; }
+.zoom-in-95 { animation-name: ai-zoomIn95; }
+.slide-in-from-top-1 { animation-name: ai-slideInFromTop1; }
+.slide-in-from-top-2 { animation-name: ai-slideInFromTop2; }
+.slide-in-from-top-3 { animation-name: ai-slideInFromTop3; }
+.slide-in-from-bottom-4 { animation-name: ai-slideInFromBottom4; }
+.out { animation-name: ai-fadeOut; }
+
+.duration-150 { animation-duration: 150ms; }
+.duration-200 { animation-duration: 200ms; }
+.duration-300 { animation-duration: 300ms; }
+.duration-500 { animation-duration: 500ms; }
+
+/* Google Picker dialog sits above app chrome (sidebar z-[1100], modals z-[2000], toasts z-[99999]) */
+.picker-dialog-bg,
+.picker-dialog {
+  z-index: 2147483000 !important;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }  
+::-webkit-scrollbar-track { background: transparent; }  
+::-webkit-scrollbar-thumb { 
+  @apply bg-slate-300/80 dark:bg-zinc-600/60 rounded-full border-[3px] border-solid border-transparent bg-clip-padding transition-colors; 
+}  
+::-webkit-scrollbar-thumb:hover { 
+  @apply bg-slate-400/90 dark:bg-zinc-500/80 border-[2px]; 
+}
