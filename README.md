@@ -10,7 +10,8 @@ This repository ships both halves of the app: `backend/` (Express API) and
 
 - Files and folders on any S3-compatible store — AWS S3, Cloudflare R2,
   Backblaze B2, or MinIO
-- Private and public sharing links with per-plan quota enforcement
+- Private and public sharing links — quotas come from admin-set `user.maxQuota`
+  / `user.maxBandwidthQuota`; self-hosted mode enforces no public-share cap
 - Google Drive import
 - Google and GitHub OAuth sign-in alongside password login with TOTP 2FA
 - Admin panel for users, roles, and storage/bandwidth quotas
@@ -51,12 +52,16 @@ to the backend.
 
 ## Configuration
 
-Both `.env.example` files are fully commented and are the source of truth.
+Both `.env.example` files are the source of truth. `backend/.env.example` is
+commented section by section; `frontend/.env.example` is five bare lines with
+one inline comment.
 
 ### `backend/.env.example`
 
-The server validates `requiredEnvVars` at startup (`backend/misc/constants.js`)
-and exits if any are missing:
+`requiredEnvVars` (`backend/misc/constants.js`) lists what the server needs.
+Boot-time validation is **not wired in**: `checkEnv()` (`backend/utils/helper.js`)
+is exported but never called, so a missing variable surfaces at runtime instead
+of at startup. The groups:
 
 | Group | Variables |
 | --- | --- |
@@ -73,8 +78,9 @@ Email transport is chosen by `EMAIL_PROVIDER`: `resend` needs
 `RESEND_API_KEY`, `smtp` needs `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`.
 
 Set `APP_MODE=selfhosted` (the default when unset) for this edition. With
-`APP_MODE=saas` the server enforces cloud-plan quotas and requires additional
-variables — that mode is intended for the hosted product, not this repo.
+`APP_MODE=saas` the server additionally enables SaaS-gated routes (feedback
+submission, the Cloudflare bandwidth webhook) and admin quota ceilings — that
+mode is intended for the hosted product, not this repo.
 
 ### `frontend/.env.example`
 
@@ -82,7 +88,7 @@ variables — that mode is intended for the hosted product, not this repo.
 | --- | --- |
 | `VITE_API_URL` | Backend base URL — defaults to `http://localhost:4000` |
 | `VITE_APP_MODE` | `selfhosted` (default) or `saas` |
-| `VITE_CLIENT_ORIGIN` | Frontend origin |
+| `VITE_CLIENT_ORIGIN` | Unused — read by no code (present in `.env.example` only) |
 | `VITE_GOOGLE_API_KEY`, `VITE_GOOGLE_CLOUD_PROJECT_NUMBER` | Google API credentials |
 
 ## Workers
@@ -99,8 +105,10 @@ Run both from `backend/`. Neither is required for first boot.
 
 ## API documentation
 
-Request/response notes for every route group live in
-[`backend/docs`](backend/docs).
+Request/response notes for most route groups live in
+[`backend/docs`](backend/docs) — auth, admin, files, directories, uploads,
+users, shares, OAuth and Drive import. There is no doc for
+`notificationRoutes`.
 
 ## Project layout
 

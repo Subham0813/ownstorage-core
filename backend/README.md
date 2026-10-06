@@ -1,6 +1,6 @@
 # OwnStorage — Backend (open-source core)
 
-![version](https://img.shields.io/badge/version-1.0.0-blue) ![node](https://img.shields.io/badge/node-%3E%3D20-green) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-1.0.0-blue) ![node](https://img.shields.io/badge/node-%3E%3D20.6-green) ![license](https://img.shields.io/badge/license-MIT-green)
 
 The open-source, self-hostable backend of **OwnStorage** — a private cloud storage platform built with Node.js + Express (ES Modules). It powers file & directory management, resumable chunked uploads to any S3-compatible storage (AWS, Cloudflare R2, Backblaze B2, MinIO), role-based sharing, OAuth login, Google Drive import, two-factor authentication, and a full admin console.
 
@@ -33,9 +33,9 @@ This is the **core** build: all billing/subscription (Razorpay) code is removed.
 ## Features
 
 - **File & Directory Management** — create, rename, move, copy, star, trash, restore, and permanently delete files and directories with full recursive support.
-- **Resumable Chunked Uploads** — client-driven S3/B2 multipart uploads via pre-signed PUT URLs. Files ≤ 5 MB use a single standard PUT; larger files use S3 multipart with configurable chunk sizes and concurrency limits.
+- **Resumable Chunked Uploads** — client-driven S3/B2 multipart uploads via pre-signed PUT URLs. Every upload goes through `CreateMultipartUpload` (the single-PUT branch is commented out in `uploadControllers.js`); a file no larger than the chunk size simply completes as one part, with configurable chunk sizes and concurrency limits.
 - **Thumbnail Support** — optional base64 `webp` thumbnail uploaded to the public bucket on upload completion (≤1 MB).
-- **Bandwidth Tracking** — the server tracks served bytes per user (30-day rolling window, resets daily via BullMQ). Optionally integrates with a Cloudflare Worker or CloudFront for signed URL delivery.
+- **Bandwidth Tracking** — the server tracks served bytes per user on a 30-day rolling window; a daily BullMQ job zeroes only users whose window has expired (it also lazily resets on access via `ensureBandwidthWindow`). Optionally integrates with a Cloudflare Worker or CloudFront for signed URL delivery.
 - **Authentication**
   - Email + password with mandatory OTP verification (6-digit, 5-minute TTL, Redis).
   - Optional TOTP-based 2FA (authenticator app) — QR code, period 30s.
@@ -45,10 +45,10 @@ This is the **core** build: all billing/subscription (Razorpay) code is removed.
   - Stateful sessions in Redis with signed `sessionId` cookies (7-day TTL, sliding window).
 - **Role-Based Sharing**
   - Share files/directories with specific users by email (`view` / `edit`).
-  - Public share links with optional expiry — capped at 500 MB per file and 2 GB aggregate active bytes.
+  - Public share links with optional expiry — no size/aggregate cap is enforced server-side in this build: `getUserLimits()` returns `maxPublicShareBytes` / `maxPublicShareFileBytes` as `null` and both checks are gated on `Number.isFinite`.
   - Token regeneration and per-user revocation. Guest access via `/api/public/shared/:token`.
-  - Administrators assign `plan` tiers (`FREE` / `PRO` / `BUSINESS`) that raise the share caps.
-- **Google Drive Import** — server-side streaming from Drive directly to S3/B2 with real-time progress polling. Google Docs exported to Office formats; oversized exports saved as webview links.
+  - Administrators assign `plan` tiers (`FREE` / `PRO` / `BUSINESS`). In self-hosted mode the share caps are `null` for every tier, so the plan only changes trash retention and the `limits` payload sent to the client.
+- **Google Drive Import** — server-side streaming from Drive directly to S3/B2 with real-time progress polling. Google Docs exported to PDF (Sheets → `.xlsx`, Slides → `.pptx`) via `EXPORT_MAP`; oversized exports saved as webview links.
 - **Feedback (admin-managed)** — users can submit feedback (SaaS mode only; screenshots ≤1 MB to the public bucket); admins moderate, reply by email, and manage status.
 - **Background Jobs (BullMQ)** — 7 scheduled jobs (separate scheduler/worker): trash-collector, quota-reaper, session-reaper, bandwidth reset, share-token invalidation, public-share-reaper, active-users sweeper.
 - **Admin Controls** — dashboards, paginated users, role changes, forced logout, soft-delete (ban), recovery, permanent deletion with S3 cleanup, quota control, feedback moderation and direct email.
@@ -61,7 +61,7 @@ This is the **core** build: all billing/subscription (Razorpay) code is removed.
 
 | Layer            | Technology                                                                                |
 | ---------------- | ----------------------------------------------------------------------------------------- |
-| Runtime          | Node.js (ES Modules, `type: module`)                                                      |
+| Runtime          | Node.js 20.6+ (ES Modules, `type: module`, npm scripts use `--env-file`) |
 | Framework        | Express 4                                                                                 |
 | Database         | MongoDB via Mongoose 9                                                                    |
 | Cache / Sessions | Redis v5 (JSON module)                                                                    |
@@ -92,7 +92,7 @@ backend/
 │   ├── FileControllers.js        # preview, download, copy, delete
 │   ├── importControllers.js      # Google Drive import pipeline + picker-token
 │   ├── oauthControllers.js       # Google, GitHub, Google Drive OAuth (PKCE)
-│   ├── uploadControllers.js      # S3 multipart/standard session (initiate/complete/retry/cancel)
+│   ├── uploadControllers.js      # S3 multipart session (initiate/complete/retry/cancel)
 │   ├── userControllers.js        # profile, stats/usage (cached), avatar, logout, empty-trash, feedback
 │   ├── adminControllers.js       # dashboard, users, role, quota, logout, ban, recover, delete, feedback
 │   ├── notificationControllers.js# list, mark-read, unread-count
@@ -127,7 +127,7 @@ backend/
 │   └── ...
 ├── misc/constants.js             # PLAN_DETAILS, INSTANCE_CONFIG, t, requiredEnvVars
 ├── jobs/queueJobs.js             # BullMQ Queue + Worker + Scheduler (7 jobs)
-├── docs/                         # Per-route request/response Markdown
+├── docs/                         # Per-route request/response Markdown (no notification doc)
 ├── .env.example / package.json / CHANGELOG.md
 └── public/                       # gitignored generated assets
 ```
@@ -136,7 +136,7 @@ backend/
 
 ## Environment Variables
 
-Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the core repo runs **self-hosted** (`APP_MODE=selfhosted`) — no billing stack exists here.
+Copy `.env.example` to `.env`. `APP_MODE` defaults to **`selfhosted`** in code (`misc/constants.js`) — this core repo runs self-hosted and has no billing stack; `APP_MODE=saas` is the hosted product and additionally enables SaaS-only routes (feedback submit, Cloudflare bandwidth webhook) and admin quota ceilings.
 
 ### Core
 
@@ -151,6 +151,7 @@ Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the cor
 | `COOKIE_SECRET`              | Sign all cookies                                         | `random 32+ chars`         |
 | `CLIENT_URL`                 | Frontend base URL for email links                        | `https://app.example.com`  |
 | `CLIENT_AUTH_CALLBACK_URL`   | OAuth final redirect                                     | `https://app.example.com/auth/callback` |
+| `CLIENT_APP_URL`             | Unused — in `.env.example` only, no code reads it        | `https://app.example.com`  |
 | `OAUTH_TOKEN_ENCRYPTION_KEY` | AES-256-GCM key (32+ chars)                              | `change-me-32-char-minimum-secret` |
 
 ### Database & Cache
@@ -159,7 +160,7 @@ Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the cor
 | ---------------------------------------------- | --------------------------------------------------- | ---------------------------------------- |
 | `MONGO_URI`                                    | MongoDB URI                                         | `mongodb://user:pass@host:27017/db`      |
 | `REDIS_URL`                                    | Redis connection (app cache, sessions, BullMQ jobs) | `redis://:pass@host:6379`                |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Fallback — only used when `REDIS_URL` is unset      | `127.0.0.1` / `6379`                     |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Legacy trio — only BullMQ's `parseRedisUrl()` (`jobs/queueJobs.js`) reads these; the app's Redis client (`configs/redis.js`) uses `REDIS_URL` exclusively | `127.0.0.1` / `6379`                     |
 
 ### Storage (S3-compatible — AWS, R2, B2, MinIO)
 
@@ -170,9 +171,10 @@ Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the cor
 | `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` | Creds                                                       | `...`                                    |
 | `STORAGE_ENDPOINT`                          | Custom endpoint (R2/B2/MinIO) — omit for AWS                | `https://s3.us-east-005.backblazeb2.com` |
 | `STORAGE_FORCE_PATH_STYLE`                  | `true` for MinIO                                            | `false`                                  |
-| `PUBLIC_BUCKET_NAME` etc                    | Same 5 vars for the public bucket (thumbnails/avatars/feedback) |                                   |
+| `PUBLIC_BUCKET_NAME` / `PUBLIC_ACCESS_KEY` / `PUBLIC_SECRET_KEY` | Public bucket (thumbnails/avatars/feedback) — its own creds | `my-public-bucket`       |
+| `PUBLIC_ENDPOINT` / `PUBLIC_REGION` | Public-bucket endpoint (R2/B2/MinIO — optional) and region; both are read by `services/s3Client.js`, region falls back to `us-east-1` | `https://s3.us-east-005.backblazeb2.com` |
 | `PUBLIC_BUCKET_CDN`                         | CDN that serves the public bucket                           | `https://cdn.example.com`                |
-| `B2_BUCKET_NAME`                            | Alias = `STORAGE_BUCKET_NAME` for ZIP streaming — set same  |                                          |
+| `B2_BUCKET_NAME`                            | **Unused** — in `.env.example` only; no code reads it       |                                          |
 
 ### CDN (optional)
 
@@ -181,6 +183,7 @@ Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the cor
 | `CDN_PROVIDER`                                        | `cloudflare` (HMAC worker, SaaS only) / `cloudfront` / omit for S3 pre-signed      |
 | `CDN_DOMAIN`                                          | Worker URL or CloudFront `dxxx.cloudfront.net`                                     |
 | `CLOUDFLARE_WEBHOOK_SECRET`                           | HMAC secret for bandwidth webhook (SaaS only)                                      |
+| `CLOUDFLONT_URL`                             | CloudFront distribution domain read by `services/cloudfront.js` (e.g. `d123.cloudfront.net`) |
 | `CLOUDFRONT_PRIVATE_KEY` / `CLOUDFRONT_PUBLIC_KEY_ID` | For the CloudFront signer (`\n` as `\\n`)                                          |
 
 ### OAuth
@@ -188,7 +191,7 @@ Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the cor
 | Variable                                                            | Description                                       |
 | ------------------------------------------------------------------- | ------------------------------------------------- |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI` | Google login                                      |
-| `GOOGLE_DRIVE_REDIRECT_URI`                                         | Drive import (`drive.readonly`, `prompt consent`) |
+| `GOOGLE_DRIVE_REDIRECT_URI`                                         | Drive import (`drive.file`, `prompt consent`) |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` / `GITHUB_REDIRECT_URI` | GitHub login                                      |
 
 ### Email
@@ -200,7 +203,8 @@ Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the cor
 | `FROM_EMAIL`                                                          | Sender address for transactional emails                    |
 | `ADMIN_EMAIL`                                                         | Inbox for feedback/admin alerts                            |
 | `SUPPORT_EMAIL`                                                       | Shown in templates as the support contact                  |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_SECURE` | Required if `smtp` (`true` for port 465)                   |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER`       | Required if `smtp` (`smtpEnvVars`)                         |
+| `SMTP_PASS` / `SMTP_SECURE`                   | Optional — `SMTP_PASS` falls back to `SMTP_PASSWORD`; `SMTP_SECURE=true` for port 465 (also implied by port 465) |
 
 > **Email by mode** — OTP, password-reset, sharing, ban/recover, and feedback emails work in `selfhosted` mode when `FROM_EMAIL`/`SUPPORT_EMAIL`/`ADMIN_EMAIL` are set. SaaS-only notifications (invoice, abandoned-cart, subscription changes) were removed with the billing stack.
 
@@ -210,7 +214,7 @@ Copy `.env.example` to `.env`. `APP_MODE` defaults to `saas` in code but the cor
 | ----------- | ------------------------------------------------ |
 | `MAX_DEPTH` | Max recursion for ZIP `serveZipS3` (default `5`) |
 
-`misc/constants.js:requiredEnvVars` is checked at boot via `utils/helper.js checkEnv()` — the process exits with a clear message if anything is missing.
+`utils/helper.js` exports `checkEnv()`, which validates `misc/constants.js:requiredEnvVars` (plus `smtpEnvVars` when `EMAIL_PROVIDER=smtp`) and exits with a clear message — but **it is never called**, so no boot-time validation actually runs. A missing variable surfaces at runtime instead.
 
 ---
 
@@ -220,15 +224,15 @@ Self-hosted quotas are enforced from **admin-controlled database fields** (not s
 
 | Limit              | Default                   | Controlled by                          |
 | ------------------ | ------------------------- | -------------------------------------- |
-| Storage quota      | `user.maxQuota ?? ∞`      | Admin (`PATCH /api/admin/quota/:id`)   |
+| Storage quota      | `user.maxQuota ?? ∞`      | Admin (`PATCH /api/admin/user/:id/quota`) |
 | Max file size      | 50 GB (`INSTANCE_CONFIG`) | `INSTANCE_CONFIG.maxFileSize`          |
-| Monthly bandwidth  | `user.maxBandwidthQuota ?? ∞` | Admin / `INSTANCE_CONFIG`          |
+| Monthly bandwidth  | `user.maxBandwidthQuota ?? ∞` | Admin (`PATCH /api/admin/user/:id/quota`) — `INSTANCE_CONFIG` has no bandwidth field |
 | Upload concurrency | 4 (`INSTANCE_CONFIG`)     | `INSTANCE_CONFIG.maxUploadConcurrency` |
-| Max devices        | `∞`                       | —                                      |
-| Trash retention    | 5 days (`PLAN_DETAILS.FREE`) | `PLAN_DETAILS`                     |
-| Public link caps   | 500 MB/file, 2 GB total   | Admin can raise via user `plan`        |
+| Max devices        | `∞`                       | — (hardcoded `Infinity` in the session code, `PLAN_DETAILS.maxDevices` unused) |
+| Trash retention    | 5 days (`PLAN_DETAILS.FREE`) | User `plan` → `PLAN_DETAILS[plan].trashRetentionDays` |
+| Public link caps   | None enforced             | `getUserLimits()` returns `null`/`null` unconditionally — the `PLAN_DETAILS` caps only reach the client `limits` payload, and only outside self-hosted mode |
 
-`PLAN_DETAILS` (`misc/constants.js`) defines `FREE` / `PRO` / `BUSINESS` tiers used for trash retention, public-share caps and grace windows. Assign a plan to a user via the admin dashboard.
+`PLAN_DETAILS` (`misc/constants.js`) defines `FREE` / `PRO` / `BUSINESS` tiers. In this build it is actually consumed for trash retention (`PLAN_DETAILS[req.user.plan].trashRetentionDays`) and for the `limits` object returned to the client (whose share caps are nulled in self-hosted mode). Its public-share caps never reach the server-side checks (`getUserLimits()` hardcodes `null`), `gracePeriod`/`gracePeriodEndsAt` are effectively dead (`startPublicShareGraceIfNeeded` has no callers and nothing ever sets `gracePeriodEndsAt`), and `maxDevices` is unused. Assign a plan to a user via the admin dashboard.
 
 ---
 
@@ -247,8 +251,8 @@ npm run dev              # hot reload via --watch
 npm start                # production
 
 # 4. Background jobs (production — run scheduler once + N workers)
-npm run worker:scheduler # registers 7 repeatables
-npm run worker           # consumes — scale horizontally
+npm run worker:scheduler # registers the 7 repeatables, then starts consuming
+npm run worker           # consumes only — scale horizontally
 
 # 5. Health
 curl http://localhost:4000/api/user/info # 401 without a session
@@ -276,7 +280,7 @@ All authenticated routes need the `sessionId` signed cookie.
 | `/api/notifications/*`            | List, unread-count, mark-read                                                | Session                 | `global`         |
 | `/api/admin/*`                    | Users, dashboard, quota, ban/recover/delete, feedback                        | Session + `SUPER_ROLES` | `global`         |
 
-Full request/response for each endpoint is in [`docs/`](./docs/).
+Request/response docs for these route groups are in [`docs/`](./docs/) — everything except `notifications`.
 
 ---
 
@@ -291,7 +295,7 @@ Full request/response for each endpoint is in [`docs/`](./docs/).
 2a. If 2FA disabled:
    POST /api/auth/request-otp → reads authToken, sends 6-digit OTP (5 min Redis)
    POST /api/auth/verify-otp → verifies OTP, creates
-      storageApp:user:{id}:userdata (60s) + storageApp:user:{id}:session:{token} (7d, sliding to 6d if <1d)
+      storageApp:user:{id}:userdata (120s) + storageApp:user:{id}:session:{token} (7d, sliding to 6d if <1d)
       → sets sessionId (lax, signed) + csrf (double-submit, httpOnly false) → user payload
 
 2b. If 2FA enabled: POST /api/auth/verify-totp → same session creation after TOTP
@@ -301,7 +305,7 @@ Full request/response for each endpoint is in [`docs/`](./docs/).
       creates session or redirects to CLIENT_AUTH_CALLBACK_URL for 2FA/Session limits
 ```
 
-`validateSession.js` slids the TTL, pushes `storageApp:active_users` (60s window), and runs `restrictOperations`.
+`validateSession.js` slids the TTL, re-applies the 60s `userdata` TTL, z-adds the user to `storageApp:active_users` (a ZSET kept for 30 days — trimmed daily by `active-users-sweeper`, see the job table), and runs `restrictOperations`.
 
 ---
 
@@ -312,12 +316,12 @@ S3 never proxies through Node — pre-signed PUTs:
 ```
 1. POST /api/uploads/initiate { file:{name,size,mime}, targetId }
    → quota vs getUserLimits, maxFileSize, key files/{userId}/{now}.{ext}
-   → ≤5 MB: 1 PutObject URL (standard) | >5 MB: CreateMultipartUpload → N UploadPart URLs (chunkSize = min(size, limits.chunkSize))
+   → always CreateMultipartUpload → N UploadPart URLs (chunkSize = min(size, limits.chunkSize); the ≤5 MB single-PUT branch is commented out, so a small file just completes as a single part)
 
 2. Client PUTs each chunk → collects ETag
 
 3. PUT /api/uploads/complete/:id { parts:[{partNumber,ETag}], thumbnailBase64? }
-   → CompleteMultipartUpload (multipart only), HeadObject size verify, thumbnail ≤1 MB → PutObject thumbnails/{userId}/{name}.webp (CacheControl 2hr, public bucket)
+   → CompleteMultipartUpload (multipart only), HeadObject size verify, thumbnail ≤1 MB → PutObject thumbnails/{userId}/{timestamp}-{name}.webp (CacheControl 2hr, public bucket)
    → UserFile.create + Directory.bulkWrite $inc size on path + del userdata + invalidateUser
 ```
 
@@ -327,12 +331,12 @@ S3 never proxies through Node — pre-signed PUTs:
 
 ## Google Drive Import
 
-`GET /api/oauth/google-drive/connect` scope `drive.readonly prompt consent` → refresh_token.
+`GET /api/oauth/google-drive/connect` scope `drive.file prompt consent` (PKCE `S256`) → refresh_token.
 
 ```
 1. GET  /api/import/google/picker-token → decrypt refreshToken, refresh if expiry-60s, bust userdata, return accessToken
 2. POST /api/import/google/initiate { file:{id,name,mimeType,sizeBytes}, targetId } → Redis storageApp:user:{id}:import:{uploadId} 6hr
-3. PUT  /api/import/google/start-import/:id → 202 fire-and-forget: googleapis drive.files.get/export (EXPORT_MAP for Docs → Office), stream via @aws-sdk/lib-storage Upload to S3, progress throttle 1s → bytesRead, thumbnailLink → public bucket, notify, status can_complete
+3. PUT  /api/import/google/start-import/:id → 202 fire-and-forget: googleapis drive.files.get/export (`EXPORT_MAP`: Docs → PDF, Sheets → `.xlsx`, Slides → `.pptx`), stream via @aws-sdk/lib-storage Upload to S3, progress throttle 1s → bytesRead, thumbnailLink → public bucket, notify, status can_complete
 4. GET  /api/import/google/progress/:id → poll
 5. PUT  /api/import/google/complete/:id → verify size, create UserFile, notify
 ```
@@ -343,7 +347,7 @@ Oversize Google Docs exports → saved as `webviewLink` size 0.
 
 ## Background Jobs
 
-BullMQ `Queue("StorageApp-Cron-Queue")` uses the Redis connection resolved by `parseRedisUrl()` (`REDIS_URL`, or the legacy `REDIS_HOST/PORT/PASSWORD` trio as fallback). `node jobs/queueJobs.js scheduler` registers; `node jobs/queueJobs.js worker` consumes (scale workers horizontally).
+BullMQ `Queue("StorageApp-Cron-Queue")` uses the Redis connection resolved by `parseRedisUrl()` (`REDIS_URL`, or the legacy `REDIS_HOST/PORT/PASSWORD` trio as fallback). `node jobs/queueJobs.js scheduler` registers the repeatables **and then starts a worker** (`startBullMQJobs()` calls `startBullMQWorker()`); `node jobs/queueJobs.js worker` consumes only — run it separately to scale.
 
 | Job                      | Schedule                 | What It Does                                                                                             |
 | ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------- |
@@ -365,7 +369,7 @@ BullMQ `Queue("StorageApp-Cron-Queue")` uses the Redis connection resolved by `p
 
 * **Tier1 per-user (60s):** `info`, `usage`, `stats` (self only, admin `?id` bypass). Busted via `invalidateUser(userId)` in all mutating paths: name/avatar update, upload complete, file/dir delete, admin quota, `bandwidthWebhook`, `queueJobs`.
 * **Tier2 global (900s):** static plans data.
-* `getUserPayload` also caches `storageApp:user:{id}:userdata` (60s) via `validateSession.js`.
+* `validateSession.js` writes and refreshes `storageApp:user:{id}:userdata` (120s at session creation, 60s afterwards) — `getUserPayload` itself performs no caching.
 
 ---
 
@@ -402,18 +406,20 @@ Admins manage everything under `/api/admin/feedback/*` (list by user, patch stat
 
 ## Deployment
 
-`trust proxy 1` for `X-Forwarded-*`. Graceful `SIGTERM/SIGINT` closes `redisClient` + BullMQ `worker.close()` + `mongoose.disconnect()`.
+`trust proxy 1` for `X-Forwarded-*`. Graceful `SIGTERM/SIGINT` in `app.js` closes only the HTTP server and `redisClient`. `mongoose.disconnect()` runs on a separate `process.once("SIGINT")` hook in `configs/connect.js` (never on SIGTERM), and BullMQ `worker.close()` is not wired into the API process at all — the standalone worker owns its own lifecycle.
 
 ```bash
 # Production on your server
 NODE_ENV=production PORT=4000 node --env-file=.env app.js
-# or PM2
-pm2 start ecosystem.config.js --env production --update-env
+# or PM2 — the repo ships no ecosystem file, so start each process by npm script
+pm2 start npm --name ownstorage-api -- start
+pm2 start npm --name ownstorage-scheduler -- run worker:scheduler
+pm2 start npm --name ownstorage-worker -- run worker    # scale with -i N
 pm2 save && pm2 startup
 # nginx server_name api.example.com → proxy_pass http://127.0.0.1:4000;
 ```
 
-Run separate units for jobs: `node --env-file=.env jobs/queueJobs.js scheduler` once, `node --env-file=.env jobs/queueJobs.js worker` × N. `checkEnv()` in `utils/helper.js` fails fast if a required variable is missing.
+Run separate units for jobs: `node --env-file=.env jobs/queueJobs.js scheduler` once, `node --env-file=.env jobs/queueJobs.js worker` × N. `checkEnv()` in `utils/helper.js` is exported for this purpose but is never called, so nothing fails fast at boot — verify `.env` yourself before starting.
 
 ---
 
@@ -421,7 +427,7 @@ Run separate units for jobs: `node --env-file=.env jobs/queueJobs.js scheduler` 
 
 Import `postman_collection.json` (generated via `node generate_postman.js`). Set `{{base_url}} = https://api.example.com`, `{{sessionId}}` from the `verify-otp` cookie. Auth cookie flow documented in `docs/`.
 
-Full request/response docs per route group in [`docs/`](./docs/).
+Request/response docs per route group (all groups except `notifications`) in [`docs/`](./docs/).
 
 ---
 

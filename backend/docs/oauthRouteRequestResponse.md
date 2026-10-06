@@ -162,7 +162,7 @@ Otherwise sets PKCE cookies and redirects to Google for Drive scope authorizatio
 
 **Side effect:** Sets signed cookie `oauth_google_drive = { state, codeVerifier, session }` (httpOnly, 5 min)
 
-**Response:** `302 Redirect` → Google authorization URL (scope: `drive.readonly`)
+**Response:** `302 Redirect` → Google authorization URL (scope: `drive.file`)
 
 ---
 

@@ -5,7 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [1.0.0] - 2026
+## [1.0.0] - 2026-10-06
+
+> First release of this repository (initial commit `58dfc2f`). The `Changed`
+> entries below compare this open-source core with the internal production
+> codebase it was cut from — there were no earlier releases here.
 
 ### Added
 
@@ -14,7 +18,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Plans `PRO_MONTHLY/YEARLY` and `BUSINESS_MONTHLY/YEARLY` collapsed to `PRO` and `BUSINESS`; `PLAN_DETAILS` now only defines tier rules (trash retention, public-share caps, grace windows) — no pricing or payment metadata.
+- Plans `PRO_MONTHLY/YEARLY` and `BUSINESS_MONTHLY/YEARLY` collapsed to `PRO` and `BUSINESS`; `PLAN_DETAILS` defines only tier rules (trash retention, public-share caps, grace windows) — no pricing or payment metadata.
 - `User.subscription` ref field and `subscriptionExpiresAt` removed; plan enum restricts to `FREE | PRO | BUSINESS`.
 - BullMQ schedule reduced to 7 jobs (trash-collector, quota-reaper, session-reaper, bandwidth-reset, share-token-invalidator, public-share-reaper, active-users-sweeper).
 - Admin dashboard no longer exposes MRR/revenue; feedback admin endpoints remain available in all modes.
