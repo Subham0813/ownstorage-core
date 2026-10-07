@@ -58,7 +58,8 @@ export default function SignIn() {
       setTotpRequired(true);
       return;
     }
-    await sendOtp({ email: form.email, purpose: "login" });
+    const otpError = await sendOtp({ email: form.email, purpose: "login" });
+    if (otpError) return;
     setOtpSent(true);
   };
 
@@ -152,8 +153,12 @@ export default function SignIn() {
               onClick={async () => {
                 setLoading(true);
                 setShowSessionModal(false);
-                await sendOtp({ email: form.email, purpose: "login" });
+                const otpError = await sendOtp({
+                  email: form.email,
+                  purpose: "login",
+                });
                 setLoading(false);
+                if (otpError) return;
                 setOtpSent(true);
               }}
             >

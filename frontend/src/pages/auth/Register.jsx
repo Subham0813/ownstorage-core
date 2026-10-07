@@ -42,7 +42,11 @@ export default function Register() {
       setLoading(false);
       return;
     }
-    await sendOtp({ email: form.email, purpose: "register" });
+    const otpError = await sendOtp({ email: form.email, purpose: "register" });
+    if (otpError) {
+      setLoading(false);
+      return;
+    }
     setOtpSent(true);
     setLoading(false);
   };

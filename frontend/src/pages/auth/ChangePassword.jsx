@@ -61,7 +61,7 @@ export default function ChangePassword() {
       <div className="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/50 rounded-xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div className="text-center mb-7">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 border mb-4">
-            <Icon name="shield" size={22} color="#22c55e" />
+            <Icon name="shield" size={22} color="currentColor" />
           </div>
           <h1 className="font-display text-xl font-extrabold text-slate-900 dark:text-zinc-100 mb-1">
             New password

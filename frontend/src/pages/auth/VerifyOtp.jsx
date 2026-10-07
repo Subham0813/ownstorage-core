@@ -31,14 +31,34 @@ export default function VerifyOtp() {
     }
     sessionStorage.setItem("otpEmail", email);
     sessionStorage.setItem("otpPurpose", purpose);
-  }, [email, purpose, navigate]);
+    const from = location.state?.from;
+    if (from) sessionStorage.setItem("otpSource", from);
+    else sessionStorage.removeItem("otpSource");
+  }, [email, purpose, location.state, navigate]);
+
+  const sourceByPurpose = {
+    login: "/signin",
+    register: "/register",
+    "forgot-password": "/forgot-password",
+  };
+
+  const goBackToSource = () => {
+    const from = sessionStorage.getItem("otpSource");
+    navigate(from || sourceByPurpose[purpose] || "/signin", { replace: true });
+  };
+
+  const handleResend = async () => {
+    const errorMessage = await sendOtp({ email, purpose });
+    if (errorMessage && /cookie/i.test(errorMessage)) goBackToSource();
+  };
 
   const handle = async (codeOrOptions) => {
     const code = typeof codeOrOptions === "string" ? codeOrOptions : otp;
     if (!code || code.length !== 6) return;
-    await verifyOtp({ email, purpose, otp: code }, () => {
+    const errorMessage = await verifyOtp({ email, purpose, otp: code }, () => {
       sessionStorage.removeItem("otpEmail");
       sessionStorage.removeItem("otpPurpose");
+      sessionStorage.removeItem("otpSource");
       if (purpose === "forgot-password")
         navigate("/change-password", { state: { email } });
       else
@@ -51,6 +71,7 @@ export default function VerifyOtp() {
           },
         });
     });
+    if (errorMessage && /cookie/i.test(errorMessage)) goBackToSource();
   };
 
   return (
@@ -61,7 +82,7 @@ export default function VerifyOtp() {
       <div className="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/50 rounded-xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div className="text-center mb-7">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 border mb-4">
-            <Icon name="mail" size={22} color="#22c55e" />
+            <Icon name="mail" size={22} color="currentColor" />
           </div>
           <h1 className="font-display text-xl font-extrabold text-slate-900 dark:text-zinc-100 mb-1">
             Check your email
@@ -91,7 +112,7 @@ export default function VerifyOtp() {
         <Btn
           variant="primary"
           className="w-full justify-center py-2.5 text-sm relative"
-          onClick={otpTimer === 0 ? () => sendOtp({ email, purpose }) : handle}
+          onClick={otpTimer === 0 ? handleResend : handle}
           disabled={otp.length !== 6 && otpTimer > 0}
           loading={loading}
         >

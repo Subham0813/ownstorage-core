@@ -43,7 +43,9 @@ export function OtpProvider({ children }) {
       showMessage("success", "OTP sent to your email");
       return null;
     } catch (err) {
-      return err.response?.data?.message || "Failed to send OTP";
+      const message = err.response?.data?.message || "Failed to send OTP";
+      showMessage("error", message);
+      return message;
     } finally {
       setLoading(false);
     }

@@ -118,8 +118,18 @@ export default function Settings () {
     setResettingPw(true);
     try {
       await authAPI.forgotPasswordInit({ email: user?.email });
-      await sendOtp({ email: user?.email, purpose: "forgot-password" });
-      navigate("/verify-otp", { state: { email: user?.email, purpose: "forgot-password" } });
+      const otpError = await sendOtp({
+        email: user?.email,
+        purpose: "forgot-password",
+      });
+      if (otpError) return;
+      navigate("/verify-otp", {
+        state: {
+          email: user?.email,
+          purpose: "forgot-password",
+          from: "/settings",
+        },
+      });
     } catch (err) {
       showMessage("error", err.response?.data?.message || "Failed to start password reset");
     } finally {
