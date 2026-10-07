@@ -94,8 +94,8 @@ export default function AuthLayout({ children }) {
             </p>
           </aside>
 
-          {/* Right form panel — centered below lg, aligns with left panel on lg+ */}
-          <div className="w-full lg:max-w-[440px] flex flex-col items-center lg:items-start">
+          {/* Right form panel — centered below lg, flush right on lg+ */}
+          <div className="w-full lg:max-w-[440px] flex flex-col items-center lg:items-start lg:justify-self-end">
             {children}
           </div>
         </div>
