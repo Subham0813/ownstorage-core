@@ -1,8 +1,9 @@
-import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet, useParams } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import { RequireAuth, RequireGuest, RequireAdmin, GuestLanding } from "./routes/guards";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import RouteError from "./components/common/RouteError";
 import ScrollToTop from "./components/common/ScrollToTop";
 import { AppProvider } from "./context/AppContext";
 import { OtpProvider } from "./context/OtpContext";
@@ -55,6 +56,13 @@ const AppRoutes = () => (
   </Suspense>
 );
 
+// Legacy notification links — imports used to notify with /drive/... but no
+// such route ever existed, and stored notifications keep the old target.
+const DriveFolderRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/myfiles/folders/${id}`} replace />;
+};
+
 export const router = createBrowserRouter(
   [
     {
@@ -71,7 +79,7 @@ export const router = createBrowserRouter(
           </ReactQueryProvider>
         </Suspense>
       ),
-      errorElement: <Spinner />,
+      errorElement: <RouteError />,
       children: [
         // Public routes
         { path: "/", element: <GuestLanding /> },
@@ -118,6 +126,8 @@ export const router = createBrowserRouter(
                 { path: "/bin", element: <Trash /> },
                 { path: "/trash", element: <Navigate to="/bin" replace /> },
                 { path: "/settings", element: <Settings /> },
+                { path: "/drive", element: <Navigate to="/myfiles" replace /> },
+                { path: "/drive/folders/:id", element: <DriveFolderRedirect /> },
                 { path: "/search", element: <SearchResults /> },
               ],
             },
