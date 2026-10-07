@@ -31,5 +31,34 @@
   <body class="font-sans antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Auto-reload on deploy: Vite content-hashes its entry chunk, so a
+      // changed /assets/index-*.js name means a new build was just deployed.
+      // Tabs left open across a deploy must reload, otherwise lazy route
+      // imports 404 and nginx's SPA fallback serves index.html as text/html,
+      // producing "Expected a JavaScript module script" errors.
+      (function () {
+        var entry = function (html) {
+          var m = html.match(
+            /<script[^>]+src="([^"]*\/assets\/index-[^"]+\.js)"/,
+          );
+          return m ? m[1] : null;
+        };
+        var base = entry(document.documentElement.outerHTML);
+        if (!base) return;
+        setInterval(function () {
+          if (document.hidden) return;
+          fetch("/index.html?_=" + Date.now(), { cache: "no-store" })
+            .then(function (r) {
+              return r.text();
+            })
+            .then(function (html) {
+              var live = entry(html);
+              if (live && live !== base) window.location.reload();
+            })
+            .catch(function () {});
+        }, 60000);
+      })();
+    </script>
   </body>
 </html>
