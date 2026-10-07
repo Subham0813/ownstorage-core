@@ -25,6 +25,17 @@ function extractUserContext() {
   };
 }
 
+function isChunkLoadError(error) {
+  if (!error) return false;
+  const text = `${error?.message || ""} ${error?.stack || ""}`;
+  return (
+    /dynamically imported module/i.test(text) ||
+    /Importing a module script failed/i.test(text) ||
+    /Error loading dynamically imported module/i.test(text) ||
+    /Loading chunk [\w-]+ failed/i.test(text)
+  );
+}
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -51,6 +62,18 @@ class ErrorBoundary extends React.Component {
     };
     console.error("[ErrorBoundary] Reported crash:", payload, error);
     window.dispatchEvent(new CustomEvent("app:crash", { detail: payload }));
+
+    // Chunk-load failures happen when a tab is open across a deploy: the old
+    // index.html references chunks that no longer exist, so the lazy import
+    // 404s. Reload (once, throttled) so the fresh index.html loads the new
+    // bundle instead of showing the crash fallback.
+    if (isChunkLoadError(error)) {
+      const lastReload = Number(sessionStorage.getItem("eb:reloaded") || 0);
+      if (Date.now() - lastReload > 5000) {
+        sessionStorage.setItem("eb:reloaded", String(Date.now()));
+        window.location.reload();
+      }
+    }
   }
 
   handleTryAgain = () => {
