@@ -70,6 +70,13 @@ async function createFolderTree(items, parentId, rootName) {
 const ACTIVE_STATUSES = ["queued", "uploading", "paused"];
 const FINISHED_STATUSES = ["completed", "failed", "cancelled"];
 
+function formatEta(etaSec) {
+  if (etaSec >= 3600)
+    return `${Math.floor(etaSec / 3600)}h ${Math.round((etaSec % 3600) / 60)}m`;
+  if (etaSec >= 60) return `${Math.floor(etaSec / 60)}m ${Math.floor(etaSec % 60)}s`;
+  return `${Math.max(Math.floor(etaSec), 1)}s`;
+}
+
 function UploadMeta({ item }) {
   const [now, setNow] = useState(Date.now());
 
@@ -79,30 +86,45 @@ function UploadMeta({ item }) {
     return () => clearInterval(timer);
   }, [item.status]);
 
-  if (item.totalParts <= 1 || !item.startedAt) return null;
+  if (!item.startedAt) return null;
 
-  const remaining = Math.max(item.totalParts - item.uploadedParts.length, 0);
+  const doneBytes =
+    item.totalParts > 1
+      ? Math.min(item.uploadedParts.length * item.partSize, item.size)
+      : ((item.progress || 0) / 100) * item.size;
+  const remainingBytes = Math.max(item.size - doneBytes, 0);
   const elapsedSec = Math.max((now - item.startedAt) / 1000, 1);
-  const doneBytes = Math.min(
-    item.uploadedParts.length * item.partSize,
-    item.size,
-  );
   const rate = doneBytes / elapsedSec;
-
-  let eta = "";
-  if (rate > 0 && remaining > 0) {
-    const etaSec = Math.round((remaining * item.partSize) / rate);
-    eta =
-      etaSec >= 3600
-        ? `${Math.floor(etaSec / 3600)}h ${Math.round((etaSec % 3600) / 60)}m`
-        : etaSec >= 60
-          ? `${Math.floor(etaSec / 60)}m ${etaSec % 60}s`
-          : `${etaSec}s`;
-  }
+  const eta = rate > 0 && remainingBytes > 0 ? formatEta(remainingBytes / rate) : "";
 
   return (
     <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 mt-1 tabular-nums">
       {formatSize(doneBytes)} / {formatSize(item.size)}
+      {eta ? ` \u00b7 ~${eta} left` : ""}
+    </p>
+  );
+}
+
+function ImportMeta({ item }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (item.status !== "uploading") return undefined;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [item.status]);
+
+  if (!item.startedAt) return null;
+
+  const progress = Math.min(item.progress || 0, 100);
+  const remainingPct = Math.max(100 - progress, 0);
+  const elapsedSec = Math.max((now - item.startedAt) / 1000, 1);
+  const rate = progress / elapsedSec;
+  const eta = rate > 0 && remainingPct > 0 ? formatEta(remainingPct / rate) : "";
+
+  return (
+    <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 mt-1 tabular-nums">
+      {progress}% completed
       {eta ? ` \u00b7 ~${eta} left` : ""}
     </p>
   );
@@ -1076,6 +1098,7 @@ export default function UploadModal() {
                           style={{ width: `${im.progress}%` }}
                         />
                       </div>
+                      {im.status === "uploading" && <ImportMeta item={im} />}
                     </div>
                     <button
                       onClick={() => cancelImport(im.localId)}
