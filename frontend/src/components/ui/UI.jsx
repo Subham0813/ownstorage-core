@@ -203,9 +203,9 @@ function ModalBannerRenderer() {
   );
 }
 
-export function ModalFooter({ children }) {
+export function ModalFooter({ children, center = false }) {
   return (
-    <div className="flex gap-2 justify-end mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+    <div className={`flex gap-2 ${center ? "justify-center" : "justify-end"} mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800/80`}>
       {children}
     </div>
   );

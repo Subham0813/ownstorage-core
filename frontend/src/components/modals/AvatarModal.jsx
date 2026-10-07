@@ -160,7 +160,7 @@ export function AvatarModal({ isOpen, onClose }) {
         />
       </div>
 
-      <ModalFooter className="mt-6">
+      <ModalFooter className="mt-6" center>
         <Btn variant="ghost" onClick={onClose} disabled={saving}>
           Cancel
         </Btn>
