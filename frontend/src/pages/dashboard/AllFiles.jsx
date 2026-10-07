@@ -9,6 +9,7 @@ import { useFileDrop } from "../../hooks/useFileDrop";
 import { useFolderActions } from "../../hooks/useFolderActions";
 import { useItemSelection } from "../../hooks/useItemSelection";
 import { useContextMenuState } from "../../hooks/useContextMenuState";
+import { useHighlight } from "../../hooks/useHighlight";
 import { Breadcrumb } from "../../components/dashboard/Breadcrumb";
 import { SortBar } from "../../components/dashboard/SortBar";
 import { FileGrid } from "../../components/dashboard/FileGrid";
@@ -38,6 +39,7 @@ export default function AllFiles() {
   const parentId = id || rootDirId;
   const parentIdRef = useRef(parentId);
   const queryClient = useQueryClient();
+  useHighlight();
 
   const addFiles = useUploadStore((s) => s.addFiles);
   const addImport = useUploadStore((s) => s.addImport);

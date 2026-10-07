@@ -42,6 +42,7 @@ export const FileCard = memo(function FileCard({
       tabIndex={0}
       role="button"
       aria-selected={isSelected}
+      data-item-id={item.id}
       className={`group relative h-48 sm:h-52 rounded-2xl border transition-[transform,box-shadow,border-color] duration-300 cursor-pointer select-none outline-none flex flex-col justify-between p-3.5 hover:z-30 [content-visibility:auto] [contain-intrinsic-size:auto_13rem] ${
         isSelected
           ? "border-blue-500 dark:border-zinc-400 ring-2 ring-blue-500/40 dark:ring-zinc-500/40 shadow-xl scale-[1.01] z-20"

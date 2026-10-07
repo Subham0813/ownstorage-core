@@ -48,6 +48,7 @@ export const FileListCard = memo(function FileListCard({
       tabIndex={0}
       role="button"
       aria-selected={isSelected}
+      data-item-id={item.id}
       className={`group relative flex items-center gap-2.5 sm:gap-3 pl-2 pr-2 sm:pl-3.5 sm:pr-3 py-2.5 rounded-lg transition-[background-color] duration-150 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 [content-visibility:auto] [contain-intrinsic-size:auto_3.25rem] border-b border-slate-100 dark:border-zinc-800/60 last:border-b-0 ${
         /* isSelected
           ? "bg-slate-100/80 dark:bg-zinc-800/60"

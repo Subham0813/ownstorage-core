@@ -17,6 +17,7 @@ import { useFolderContents } from "../../hooks/useFolderContents";
 import { useBreadcrumbs } from "../../hooks/useDirectoryInfo";
 import { useItemSelection } from "../../hooks/useItemSelection";
 import { useContextMenuState } from "../../hooks/useContextMenuState";
+import { useHighlight } from "../../hooks/useHighlight";
 import { ContextMenu } from "../../components/dashboard/ContextMenu";
 import {
   useBreadcrumbCollapse,
@@ -155,6 +156,7 @@ export default function Shared() {
   const navigate = useNavigate();
   const { showMessage } = useApp();
   const queryClient = useQueryClient();
+  useHighlight();
 
   const [activeTab, setActiveTab] = useState("withMe");
   const [viewMode, setViewMode] = useState(

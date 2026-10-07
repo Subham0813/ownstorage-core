@@ -122,6 +122,7 @@ export const FolderCard = memo(function FolderCard({
       tabIndex={0}
       role="button"
       aria-selected={isSelected}
+      data-item-id={item.id}
       className={`group relative p-2.5 sm:p-3 h-24 rounded-2xl border transition-[transform,box-shadow,border-color,background-color] duration-200 cursor-pointer select-none flex flex-col justify-between gap-1.5 outline-none hover:z-30 [content-visibility:auto] [contain-intrinsic-size:auto_6rem] ${
         /* isSelected ? selectedClasses : */ idleClasses
       } ${pending ? "opacity-70" : ""}`}
