@@ -44,6 +44,7 @@ export default function NotificationBell() {
 
   const unreadCount = unreadRes ?? 0;
   const notifications = notifRes ?? [];
+  const hasRead = notifications.some((n) => n.read);
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
@@ -73,6 +74,13 @@ export default function NotificationBell() {
   const handleMarkAll = useCallback(async () => {
     try {
       await homeAPI.markAllRead();
+      invalidate();
+    } catch {}
+  }, [invalidate]);
+
+  const handleClearRead = useCallback(async () => {
+    try {
+      await homeAPI.clearRead();
       invalidate();
     } catch {}
   }, [invalidate]);
@@ -110,14 +118,26 @@ export default function NotificationBell() {
             <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
               Notifications
             </h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAll}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
-              >
-                Mark all as read
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {hasRead && (
+                <button
+                  onClick={handleClearRead}
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:underline disabled:opacity-50"
+                  title="Delete all read notifications"
+                >
+                  <Icon name="trash" size={12} />
+                  Clear read
+                </button>
+              )}
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAll}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-96 overflow-y-auto divide-y divide-slate-50 dark:divide-zinc-800/50">

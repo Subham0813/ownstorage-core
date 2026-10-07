@@ -164,6 +164,9 @@ export const homeAPI = {
   /** PUT /api/notifications/mark-all-read — mark all as read */
   markAllRead: () => axiosInstance.put("/api/notifications/mark-all-read"),
 
+  /** DELETE /api/notifications/clear-read — delete all read notifications */
+  clearRead: () => axiosInstance.delete("/api/notifications/clear-read"),
+
   /** GET /api/notifications/unread-count — get unread count */
   getUnreadCount: () => axiosInstance.get("/api/notifications/unread-count"),
 };
