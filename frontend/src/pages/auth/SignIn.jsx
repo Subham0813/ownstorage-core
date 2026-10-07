@@ -8,6 +8,7 @@ import { Icon } from "../../components/ui/Icon";
 import OTPBoxes from "../../components/auth/OTPBoxes";
 import { formatTimer } from "../../utils/formatHelpers";
 import { authAPI } from "../../api/authApi";
+import { homeAPI } from "../../api/userApi";
 import {
   Btn,
   Input,
@@ -44,6 +45,21 @@ export default function SignIn() {
     setOtpSent(false);
     setOtp("");
   }, [setOtpSent, setOtp]);
+
+  // When 2FA is required from an OAuth handshake (totpOnly), the user is already
+  // authenticated so no email/password are captured. Prefill the disabled email
+  // field from the session instead of showing the empty-input placeholder.
+  useEffect(() => {
+    if (!totpRequired || form.email) return;
+    homeAPI
+      .getUserProfile()
+      .then((res) => {
+        const user = res.data?.data?.user;
+        if (user?.email) setForm((f) => ({ ...f, email: user.email }));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totpRequired]);
 
   const submit = async () => {
     if (loading) return;
