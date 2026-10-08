@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import Icon from "../ui/Icon";
 import { ConfirmModal } from "../ui/UI";
-import { getTierStyles, planDisplayName } from "../../utils/tierStyles";
 import NotificationBell from "./NotificationBell";
 import SearchModal from "../search/SearchModal";
 import { TAB_ROOT_LABELS } from "../../utils/constants";
@@ -53,9 +52,6 @@ export default function TopBar({ onMenuToggle }) {
         .toUpperCase()
         .slice(0, 2)
     : "?";
-
-  const planStyle = getTierStyles(user?.plan);
-  const planLabel = planDisplayName(user?.plan);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -204,7 +200,7 @@ export default function TopBar({ onMenuToggle }) {
             className="flex items-center gap-2 p-1 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors outline-none"
           >
             <div
-              className={`w-9 h-9 rounded-full bg-gradient-to-tr ${planStyle.gradient} ring-2 ${planStyle.avatarRing} flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm`}
+              className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm"
             >
               {user?.avatarUrl ? (
                 <img
@@ -230,7 +226,7 @@ export default function TopBar({ onMenuToggle }) {
               <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800/80">
                 <div className="flex items-center gap-3 mb-2">
                   <div
-                    className={`w-10 h-10 rounded-full bg-gradient-to-tr ${planStyle.gradient} ring-2 ${planStyle.avatarRing} flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-xs`}
+                    className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-xs"
                   >
                     {user?.avatarUrl ? (
                       <img
@@ -250,13 +246,6 @@ export default function TopBar({ onMenuToggle }) {
                       {user?.email || ""}
                     </div>
                   </div>
-                </div>
-                <div>
-                  <span
-                    className={`inline-block text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${planStyle.badgeBg}`}
-                  >
-                    {planLabel.toUpperCase()} PLAN
-                  </span>
                 </div>
               </div>
 

@@ -117,7 +117,7 @@ axiosInstance.interceptors.response.use(
     const status = error.response.status;
     const isLogoutEndpoint = error.config?.url?.includes("/logout");
     // Public endpoints have no session — a 401 there must not kill the session
-    const isPublicApiCall = /^\/(api\/(auth|subscriptions\/plans|public\/shared|health))\b/.test(
+    const isPublicApiCall = /^\/(api\/(auth|public\/shared|health))\b/.test(
       error.config?.url ?? "",
     );
     // Public share pages have no session — don't redirect guests to /signin

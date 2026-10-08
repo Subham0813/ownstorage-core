@@ -23,7 +23,6 @@ import {
   formatSize,
 } from "../../utils/fileUtils";
 import { formatDate as formatRelDate } from "../../utils/formatHelpers";
-import { getTierStyles, planDisplayName } from "../../utils/tierStyles";
 import {
   LoggedBadge,
   BannedBadge,
@@ -94,7 +93,6 @@ const FEEDBACK_CATEGORY = {
   upload: "Upload",
   preview: "Preview",
   sharing: "Sharing",
-  billing: "Billing",
   performance: "Performance",
   other: "Other",
 };
@@ -288,7 +286,6 @@ export default function AdminUserDetail() {
 
   const initials = getInitials(user.name);
   const limits = user.limits || {};
-  const planStyle = getTierStyles(user.plan);
 
   return (
     <div className="p-0.5 sm:p-2 max-w-6xl mx-auto space-y-6 select-none pb-20 lg:pb-0">
@@ -309,9 +306,7 @@ export default function AdminUserDetail() {
               className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-white dark:border-zinc-800 shadow-md shrink-0"
             />
           ) : (
-            <div
-              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr ${planStyle.gradient} ring-2 ${planStyle.avatarRing} text-white font-black text-base sm:text-lg flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0`}
-            >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 text-white font-black text-base sm:text-lg flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
               {initials}
             </div>
           )}
@@ -335,11 +330,6 @@ export default function AdminUserDetail() {
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               {roleLabel(user.role)}
-            </span>
-            <span
-              className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full border ${getTierStyles(String(user.plan || "FREE").split("_")[0]).badgeBg}`}
-            >
-              {planDisplayName(user.plan)} Plan
             </span>
           </div>
         </div>
@@ -436,16 +426,6 @@ export default function AdminUserDetail() {
                   )}
                 </div>
               </div>
-
-              <MetaCard label="Active Plan">
-                <p className="text-sm font-bold text-slate-900 dark:text-zinc-100 mt-1 font-mono uppercase">
-                  <span
-                    className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full border ${getTierStyles(String(user.plan || "FREE").split("_")[0]).badgeBg}`}
-                  >
-                    {planDisplayName(user.plan)} Plan
-                  </span>
-                </p>
-              </MetaCard>
 
               <MetaCard label="Joined Date">
                 <p className="text-xs font-extrabold text-slate-700 dark:text-zinc-300 mt-1 font-mono">
@@ -571,7 +551,7 @@ export default function AdminUserDetail() {
 
           <div className="rounded-xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-6 shadow-sm backdrop-blur-xl">
             <h3 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-5">
-              Plan Limits
+              Account Limits
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

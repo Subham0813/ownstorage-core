@@ -7,7 +7,6 @@ import { PageBanner } from "../../components/ui/PageBanner";
 import { adminAPI } from "../../api/adminApi";
 import { formatSize, formatDate, getInitials } from "../../utils/fileUtils";
 import { useApp } from "../../context/AppContext";
-import { getTierStyles, planDisplayName } from "../../utils/tierStyles";
 
 function StatCard({ label, value, icon, gradient, textColor }) {
   return (
@@ -96,7 +95,6 @@ export default function AdminDashboard() {
   }
 
   const users = stats?.recentUsers || [];
-  const planBreakdown = stats?.planBreakdown || [];
 
   return (
     <div className="p-0.5 sm:p-2 max-w-7xl mx-auto space-y-6 select-none pb-20 lg:pb-0">
@@ -104,7 +102,7 @@ export default function AdminDashboard() {
         icon="shield"
         accent="blue"
         title="Command Center"
-        subtitle="Platform overview, system metrics, subscription breakdown, and user administration"
+        subtitle="Platform overview, system metrics, and user administration"
         right={
           <>
             <Btn
@@ -157,63 +155,15 @@ export default function AdminDashboard() {
           textColor="text-purple-600 dark:text-purple-400"
         />
         <StatCard
-          label="Monthly MRR"
-          value={`₹${(stats?.mrrRupees || 0).toLocaleString()}`}
-          icon="crown"
-          gradient="from-amber-500 to-orange-600"
-          textColor="text-amber-600 dark:text-amber-400"
+          label="Total Files Stored"
+          value={stats?.totalFiles?.toLocaleString() || "0"}
+          icon="file"
+          gradient="from-emerald-500 to-cyan-500"
+          textColor="text-cyan-600 dark:text-cyan-400"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {planBreakdown.length > 0 && (
-          <div className="p-6 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-800 shadow-sm backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-2 mb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200/60 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-xs shrink-0">
-                  <Icon name="barChart" size={20} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                    Plan Distribution
-                  </p>
-                  <h3 className="text-base sm:text-lg font-black font-display text-slate-900 dark:text-zinc-100 tracking-tight">
-                    Active Subscriptions
-                  </h3>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {planBreakdown.map((p) => {
-                const style = getTierStyles(p.plan);
-                return (
-                  <div key={p.plan} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-slate-800 dark:text-zinc-200 flex items-center gap-2">
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full ${style.dot}`}
-                        />
-                        {planDisplayName(p.plan)} Plan
-                      </span>
-                      <span className="font-mono text-slate-500 dark:text-zinc-400">
-                        {p.count.toLocaleString()} user
-                        {p.count !== 1 ? "s" : ""} ({p.percentage}%)
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden ring-1 ring-inset ring-slate-200/60 dark:ring-zinc-700/60">
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ${style.dot}`}
-                        style={{ width: `${Math.max(p.percentage, 4)}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         <div className="p-6 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-800 shadow-sm backdrop-blur-xl flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -308,9 +258,6 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3 text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-3 text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-wider">
-                    Plan
-                  </th>
                   <th className="px-6 py-3 text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-wider hidden sm:table-cell">
                     Joined
                   </th>
@@ -321,8 +268,6 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
                 {users.map((u) => {
-                  const basePlan = (u.plan || "FREE").split("_")[0];
-                  const style = getTierStyles(u.plan);
                   return (
                     <tr
                       key={u._id || u.id}
@@ -330,9 +275,7 @@ export default function AdminDashboard() {
                     >
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div
-                            className={`w-9 h-9 rounded-2xl bg-gradient-to-tr ${style.gradient} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs`}
-                          >
+                          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                             {getInitials(u.name)}
                           </div>
                           <div className="min-w-0">
@@ -361,14 +304,6 @@ export default function AdminDashboard() {
                             : u.role === "admin"
                               ? "Admin"
                               : "User"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-3.5">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${style.badgeBg}`}
-                        >
-                          {planDisplayName(basePlan)}
                         </span>
                       </td>
 

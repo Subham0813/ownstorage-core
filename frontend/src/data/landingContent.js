@@ -29,7 +29,7 @@ export const FEATURES = [
   {
     icon: "trash",
     title: "Safe Deletion",
-    desc: "Deleted files sit safely in your bin. Restore anything within your plan's retention window — no panicked emails to support.",
+    desc: "Deleted files sit safely in your bin. Restore anything within your configured retention window — no panicked emails to support.",
   },
   {
     icon: "cloud",
@@ -64,7 +64,7 @@ export const CAPABILITIES = [
   "Parallel uploads with progress tracking",
   "Nested folder structure",
   "Starred favorites",
-  "Trash bin with plan-based retention",
+  "Trash bin with configurable retention",
   "Multi-device sync",
   "OTP-secured login",
   "OAuth: Google & GitHub",

@@ -1,8 +1,7 @@
 import LegalLayout, { LegalSection } from "../components/layout/LegalLayout";
-import { isSaaS, isSelfHosted } from "../utils/appMode";
 import { Icon } from "../components/ui/Icon";
 
-const UNIVERSAL_Q_AND_A = [
+const Q_AND_A = [
   {
     q: "What is OwnStorage and how do I use it?",
     a: "OwnStorage is a modern cloud storage platform for personal and professional file management. You agree to use the service only for lawful purposes and in accordance with applicable laws. You must not store, transmit, or share illegal, harmful, malicious, or infringing content."
@@ -31,60 +30,31 @@ const UNIVERSAL_Q_AND_A = [
     q: "Are there any warranties provided with the software?",
     a: "OwnStorage is provided \"AS IS\" and \"AS AVAILABLE\" without warranties of any kind, express or implied. We do not guarantee uninterrupted, secure, or error-free operation. Under no circumstances is OwnStorage liable for data loss, data corruption, or server downtime. You are strictly responsible for maintaining independent backups of all critical data."
   },
-];
-
-const SAAS_ONLY_Q_AND_A = [
-  {
-    q: "Who operates the managed cloud and payment processing?",
-    a: "The official managed OwnStorage cloud service is operated by Subham Bachar (Sole Proprietor, trading as \"OwnStorage\"). Subscriptions and payment transactions are processed securely via Razorpay under our Merchant Terms."
-  },
-  {
-    q: "What is your refund and chargeback policy?",
-    a: "All payments for paid subscription plans are final and non-refundable once confirmed. Cancelling your subscription stops future auto-renewal charges at the end of your billing cycle. Fraudulent bank chargebacks or payment disputes will result in immediate account suspension and data purge."
-  },
-  {
-    q: "What happens if I exceed my storage quota or bandwidth?",
-    a: "Each subscription tier includes specified storage quotas and monthly bandwidth allocations. Exceeding storage quotas restricts new uploads until space is cleared or your plan is upgraded. Exhausting bandwidth temporarily throttles or pauses public downloads until the monthly reset."
-  },
-];
-
-const SELF_HOSTED_ONLY_Q_AND_A = [
   {
     q: "How are self-hosted deployments governed?",
     a: "This instance of OwnStorage is a self-hosted deployment running on infrastructure configured independently by your server operator. The software author (Subham Bachar) provides the open-source codebase under the MIT License AS-IS, and bears zero responsibility or liability for server operation, data storage, user management, or uptime on this self-hosted instance."
-  },
+  }
 ];
 
 export default function TermsPage() {
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  
-  const allQA = [
-    ...UNIVERSAL_Q_AND_A,
-    ...(isSaaS ? SAAS_ONLY_Q_AND_A : SELF_HOSTED_ONLY_Q_AND_A)
-  ];
 
   return (
     <LegalLayout
       title="Terms and Conditions"
       lastUpdated={today}
-      subtitle={
-        isSelfHosted
-          ? "Terms governing the use of this self-hosted instance of OwnStorage, provided as open-source software under the MIT License."
-          : "Please read these Terms and Conditions carefully before using the official OwnStorage managed cloud service."
-      }
+      subtitle="Terms governing the use of this self-hosted instance of OwnStorage, provided as open-source software under the MIT License."
     >
       <div className="space-y-8">
-        {isSelfHosted && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 leading-relaxed flex items-start gap-3">
-            <Icon name="info" size={18} className="shrink-0 text-amber-500 mt-0.5" />
-            <div>
-              <strong className="font-bold block mb-0.5">Self-Hosted Deployment Notice:</strong>
-              This application is operating in self-hosted mode under an open-source AS-IS license. Storage infrastructure, user authentication, and data retention on this deployment are managed independently by your server administrator.
-            </div>
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 leading-relaxed flex items-start gap-3">
+          <Icon name="info" size={18} className="shrink-0 text-amber-500 mt-0.5" />
+          <div>
+            <strong className="font-bold block mb-0.5">Self-Hosted Deployment Notice:</strong>
+            This application is operating in self-hosted mode under an open-source AS-IS license. Storage infrastructure, user authentication, and data retention on this deployment are managed independently by your server administrator.
           </div>
-        )}
+        </div>
 
-        {allQA.map((item, i) => (
+        {Q_AND_A.map((item, i) => (
           <LegalSection key={item.q} num={String(i + 1).padStart(2, "0")} title={item.q}>
             <p>{item.a}</p>
           </LegalSection>
@@ -93,4 +63,3 @@ export default function TermsPage() {
     </LegalLayout>
   );
 }
-

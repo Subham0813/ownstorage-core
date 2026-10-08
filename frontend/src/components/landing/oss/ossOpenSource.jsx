@@ -18,7 +18,7 @@ const REPOS = [
   {
     url: BACKEND_URL,
     title: "Storage-App-Backend",
-    desc: "Node.js + Express + MongoDB API, S3-compatible object storage, OAuth, and subscription engine.",
+    desc: "Node.js + Express + MongoDB API, S3-compatible object storage, and OAuth.",
     icon: "server",
   },
 ];

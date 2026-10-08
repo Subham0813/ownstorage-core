@@ -5,7 +5,6 @@ import { Icon } from "../ui/Icon";
 import { useApp } from "../../context/AppContext";
 import { homeAPI } from "../../api/userApi";
 import { getInitials } from "../../utils/fileUtils";
-import { getTierStyles } from "../../utils/tierStyles";
 
 const MAX_DIM = 512;
 const MAX_BYTES = 1024 * 1024;
@@ -42,7 +41,6 @@ const compressToSquareDataUrl = (file) =>
 export function AvatarModal({ isOpen, onClose }) {
   const { user, refreshUser, showMessage } = useApp();
   const queryClient = useQueryClient();
-  const planStyle = getTierStyles(user?.plan);
   const fileRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [fileName, setFileName] = useState("");
@@ -108,7 +106,7 @@ export function AvatarModal({ isOpen, onClose }) {
 
       <div className="flex flex-col items-center gap-5">
         <div className="relative">
-          <div className={`w-28 h-28 rounded-[28px] bg-gradient-to-tr ${planStyle.gradient} ring-2 ${planStyle.avatarRing} flex items-center justify-center text-white text-4xl font-black overflow-hidden shadow-lg shadow-blue-500/25 border-2 border-white dark:border-zinc-800`}>
+          <div className="w-28 h-28 rounded-[28px] bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 flex items-center justify-center text-white text-4xl font-black overflow-hidden shadow-lg shadow-blue-500/25 border-2 border-white dark:border-zinc-800">
             {preview ? (
               <img
                 src={preview}

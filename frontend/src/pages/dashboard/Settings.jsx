@@ -13,7 +13,6 @@ import { oauthAPI } from "../../api/oauthApi";
 import { GoogleLogo, GithubLogo, GoogleDriveLogo } from "../../components/auth/OAuthButtons";
 import { useNavigate } from "react-router-dom";
 import { formatDate, formatSize, getInitials } from "../../utils/fileUtils";
-import { planDisplayName, getTierStyles } from "../../utils/tierStyles";
 
 function parseUserAgent (ua) {
   if (!ua || ua === "unknown") {
@@ -150,10 +149,6 @@ export default function Settings () {
   const inputClass =
     "w-full px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all shadow-2xs";
 
-  const userPlanBase = (user?.limits?.planName || user?.plan || "FREE").split("_")[0];
-  const userPlanLabel = planDisplayName(userPlanBase);
-  const planStyle = getTierStyles(userPlanBase);
-
   return (
     <div className="p-0.5 sm:p-2 max-w-5xl mx-auto space-y-6 select-none pb-20 sm:pb-0">
 
@@ -164,7 +159,7 @@ export default function Settings () {
             className="relative group shrink-0 cursor-pointer"
             onClick={() => setShowAvatar(true)}
           >
-            <div className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${planStyle.gradient} ring-2 ${planStyle.avatarRing} flex items-center justify-center text-white text-lg font-black overflow-hidden shadow-md shadow-blue-500/20 border-2 border-white dark:border-zinc-800`}>
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 flex items-center justify-center text-white text-lg font-black overflow-hidden shadow-md shadow-blue-500/20 border-2 border-white dark:border-zinc-800">
               {user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -612,7 +607,7 @@ export default function Settings () {
           <h2 className="text-sm font-bold text-rose-600 dark:text-rose-400">Danger Zone</h2>
         </div>
         <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-zinc-400 mb-4 max-w-xl">
-          Permanently delete your user profile, files, and subscription data. This action is irreversible.
+          Permanently delete your user profile and files. This action is irreversible.
         </p>
         <Btn variant="danger" size="sm" onClick={() => setConfirmDelete(true)} className="font-extrabold shadow-xs active:scale-95 cursor-pointer">
           <Icon name="trash" size={14} />
@@ -624,7 +619,7 @@ export default function Settings () {
           onClose={() => setConfirmDelete(false)}
           onConfirm={() => deleteMutation.mutate()}
           title="Delete Account"
-          message="This will permanently delete your profile, files, and subscription data. This action cannot be undone."
+          message="This will permanently delete your profile and files. This action cannot be undone."
           confirmLabel="Delete Account"
           variant="danger"
         />

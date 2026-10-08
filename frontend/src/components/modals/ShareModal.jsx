@@ -203,7 +203,7 @@ export function ShareModal({ item, isOpen, onClose, onChanged }) {
           "error",
           `This ${isDir ? "folder" : "file"} exceeds the ${(
             perFileCap / 1e6
-          ).toFixed(0)} MB per-file public link limit on your plan. Please upgrade to share larger items publicly.`,
+          ).toFixed(0)} MB per-file public link limit. Reduce the file size to share it publicly.`,
         );
         return;
       }

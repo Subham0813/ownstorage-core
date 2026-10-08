@@ -87,9 +87,6 @@ export const router = createBrowserRouter(
         { path: "/terms", element: <TermsPage /> },
         { path: "/privacy", element: <PrivacyPolicy /> },
         { path: "/agreement", element: <UserAgreement /> },
-        { path: "/pricing", element: <Navigate to="/" replace /> },
-        { path: "/pricing/*", element: <Navigate to="/" replace /> },
-        { path: "/subscription", element: <Navigate to="/" replace /> },
 
         // OAuth callbacks — no auth guard
         { path: "/google", element: <AuthLayout><OAuthCallback /></AuthLayout> },

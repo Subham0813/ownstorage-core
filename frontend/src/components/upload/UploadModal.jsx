@@ -550,11 +550,7 @@ export default function UploadModal() {
 
   const usedStorage =
     user?.usedQuota ?? user?.root?.size ?? user?.usedStorageQuota ?? 0;
-  const maxStorage =
-    user?.maxQuota ??
-    user?.plan?.maxQuota ??
-    user?.plan?.maxStorage ??
-    5 * 1024 * 1024 * 1024;
+  const maxStorage = user?.maxQuota ?? 5 * 1024 * 1024 * 1024;
   const currentRemaining = Math.max(0, maxStorage - usedStorage);
   const totalPendingSize =
     pendingItems.reduce((s, u) => s + (u.size || 0), 0) +

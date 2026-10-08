@@ -9,12 +9,10 @@ import { SortBar } from "../../components/dashboard/SortBar";
 import { adminAPI } from "../../api/adminApi";
 import { useApp } from "../../context/AppContext";
 import { formatDate, getInitials } from "../../utils/fileUtils";
-import { getTierStyles, planDisplayName } from "../../utils/tierStyles";
 
 const USER_SORT_OPTIONS = [
   { value: "date", label: "Joined" },
   { value: "name", label: "Name" },
-  { value: "plan", label: "Plan" },
   { value: "role", label: "Role" },
 ];
 
@@ -307,7 +305,6 @@ export default function AdminUsers() {
                     </span>
                   </th>
                   <th className="px-3 py-2.5 sm:px-6 sm:py-3.5">Role</th>
-                  <th className="px-3 py-2.5 sm:px-6 sm:py-3.5">Plan Plan</th>
                   <th className="px-3 py-2.5 sm:px-6 sm:py-3.5 hidden md:table-cell">
                     Joined
                   </th>
@@ -321,7 +318,7 @@ export default function AdminUsers() {
                 {users.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={5}
                       className="px-6 py-12 text-center text-slate-400 font-semibold text-xs"
                     >
                       No accounts matched your search criteria.
@@ -329,8 +326,6 @@ export default function AdminUsers() {
                   </tr>
                 ) : (
                   users.map((u) => {
-                    const basePlan = (u.plan || "FREE").split("_")[0];
-                    const planStyle = getTierStyles(u.plan);
                     const isSelf = currentUser?.email === u.email;
                     return (
                       <tr
@@ -343,9 +338,7 @@ export default function AdminUsers() {
                       >
                         <td className="px-6 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div
-                              className={`w-9 h-9 rounded-2xl bg-gradient-to-tr ${planStyle.gradient} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs`}
-                            >
+                            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                               {getInitials(u.name)}
                             </div>
                             <div className="min-w-0">
@@ -379,14 +372,6 @@ export default function AdminUsers() {
                               : u.role === "admin"
                                 ? "Admin"
                                 : "User"}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-3.5">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border whitespace-nowrap ${planStyle.badgeBg}`}
-                          >
-                            {planDisplayName(basePlan)}
                           </span>
                         </td>
 
