@@ -32,18 +32,6 @@ export const adminAPI = {
   /** DELETE /api/admin/user/:id/delete — permanent delete */
   deleteUser: (id) => axiosInstance.delete(`/api/admin/user/${id}/delete`),
 
-  /** GET /api/admin/feedback/:userId — user's feedback submissions */
-  getFeedbacks: (userId, params) =>
-    axiosInstance.get(`/api/admin/feedback/${userId}`, { params }),
-
-  /** PATCH /api/admin/feedback/:feedbackId — Body: { status?, adminNotes? } */
-  updateFeedback: (feedbackId, data) =>
-    axiosInstance.patch(`/api/admin/feedback/${feedbackId}`, data),
-
-  /** POST /api/admin/feedback/:feedbackId/reply — Body: { message, status? } */
-  replyFeedback: (feedbackId, data) =>
-    axiosInstance.post(`/api/admin/feedback/${feedbackId}/reply`, data),
-
   /** POST /api/admin/user/:id/email — Body: { subject, message } */
   sendEmail: (id, data) =>
     axiosInstance.post(`/api/admin/user/${id}/email`, data),

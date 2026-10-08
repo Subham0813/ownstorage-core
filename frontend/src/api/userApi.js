@@ -133,9 +133,6 @@ export const homeAPI = {
   },
 
   // ── Storage ───────────────────────────────────────────────────────
-  /** POST /api/user/feedback — submit feedback/ bug report */
-  submitFeedback: (data) => axiosInstance.post("/api/user/feedback", data),
-
   /** GET /api/user/stats — file/folder counts, size breakdown by category */
   getStats: () => axiosInstance.get("/api/user/stats"),
 

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Icon } from "../../components/ui/Icon";
-import { OptionSelect } from "../../components/ui/OptionSelect";
 import {
   Btn,
   ConfirmModal,
@@ -11,7 +10,6 @@ import {
   ModalHeader,
   ModalFooter,
   Badge,
-  EmptyState,
   Input,
   Label,
 } from "../../components/ui/UI";
@@ -83,21 +81,7 @@ function Chips({ raw }) {
   );
 }
 
-const FEEDBACK_STATUS = {
-  pending: { label: "Pending", color: "yellow" },
-  reviewed: { label: "Reviewed", color: "blue" },
-  resolved: { label: "Resolved", color: "green" },
-};
-
-const FEEDBACK_CATEGORY = {
-  upload: "Upload",
-  preview: "Preview",
-  sharing: "Sharing",
-  performance: "Performance",
-  other: "Other",
-};
-
-const TABS = ["Overview", "Storage Analytics", "Feedback"];
+const TABS = ["Overview", "Storage Analytics"];
 
 function MetaCard({ label, children }) {
   return (
@@ -123,9 +107,6 @@ export default function AdminUserDetail() {
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
-  const [replyTarget, setReplyTarget] = useState(null);
-  const [replyMessage, setReplyMessage] = useState("");
-  const [notesDrafts, setNotesDrafts] = useState({});
 
   const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: ["adminUser", id],
@@ -140,13 +121,6 @@ export default function AdminUserDetail() {
     enabled: !!id && activeTab === "Storage Analytics",
   });
   const storage = storageData?.data?.data;
-
-  const { data: feedbacksData, isLoading: feedbacksLoading } = useQuery({
-    queryKey: ["adminUserFeedbacks", id],
-    queryFn: () => adminAPI.getFeedbacks(id),
-    enabled: !!id && activeTab === "Feedback",
-  });
-  const feedbacks = feedbacksData?.data?.data?.feedbacks;
 
   const roleMutation = useMutation({
     mutationFn: ({ id: uid, role }) => adminAPI.changeRole(uid, role),
@@ -198,36 +172,6 @@ export default function AdminUserDetail() {
       navigate("/admin/users");
     },
     onError: () => showMessage("error", "Failed to delete user"),
-  });
-
-  const feedbackUpdateMutation = useMutation({
-    mutationFn: ({ feedbackId, data }) =>
-      adminAPI.updateFeedback(feedbackId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUserFeedbacks", id] });
-      showMessage("success", "Feedback updated");
-    },
-    onError: (err) =>
-      showMessage(
-        "error",
-        err?.response?.data?.message || "Failed to update feedback",
-      ),
-  });
-
-  const replyMutation = useMutation({
-    mutationFn: ({ feedbackId, message }) =>
-      adminAPI.replyFeedback(feedbackId, { message }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUserFeedbacks", id] });
-      showMessage("success", "Reply emailed to the user");
-      setReplyTarget(null);
-      setReplyMessage("");
-    },
-    onError: (err) =>
-      showMessage(
-        "error",
-        err?.response?.data?.message || "Failed to send reply",
-      ),
   });
 
   const sendEmailMutation = useMutation({
@@ -702,144 +646,6 @@ export default function AdminUserDetail() {
         </div>
       )}
 
-      {activeTab === "Feedback" && (
-        <div className="space-y-6">
-          {feedbacksLoading ? (
-            <div className="rounded-xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-6 shadow-sm space-y-4">
-              <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
-            </div>
-          ) : feedbacks && feedbacks.length > 0 ? (
-            <div className="space-y-4">
-              {feedbacks.map((fb) => (
-                <div
-                  key={fb.id}
-                  className="rounded-xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-5 shadow-sm"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge color="grey">
-                      {FEEDBACK_CATEGORY[fb.category] || fb.category}
-                    </Badge>
-                    <Badge color={FEEDBACK_STATUS[fb.status]?.color}>
-                      {FEEDBACK_STATUS[fb.status]?.label || fb.status}
-                    </Badge>
-                    <span className="text-xs font-bold text-slate-400 ml-auto">
-                      {formatRelDate(fb.createdAt)}
-                    </span>
-                  </div>
-
-                  <p className="mt-3 text-sm font-extrabold text-slate-900 dark:text-zinc-100">
-                    {fb.title}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    {fb.description}
-                  </p>
-
-                  {fb.screenshotUrl && (
-                    <a
-                      href={fb.screenshotUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 mt-3 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                    >
-                      View screenshot ↗
-                    </a>
-                  )}
-
-                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest mb-1.5">
-                        Status
-                      </label>
-                      <OptionSelect
-                        label="Status"
-                        value={fb.status}
-                        options={[
-                          { value: "pending", label: "Pending" },
-                          { value: "reviewed", label: "Reviewed" },
-                          { value: "resolved", label: "Resolved" },
-                        ]}
-                        disabled={feedbackUpdateMutation.isPending}
-                        onChange={(v) =>
-                          feedbackUpdateMutation.mutate({
-                            feedbackId: fb.id,
-                            data: { status: v },
-                          })
-                        }
-                        fullWidth
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest mb-1.5">
-                        Admin Notes
-                      </label>
-                      <div className="flex gap-2">
-                        <textarea
-                          value={notesDrafts[fb.id] ?? fb.adminNotes ?? ""}
-                          onChange={(e) =>
-                            setNotesDrafts((d) => ({
-                              ...d,
-                              [fb.id]: e.target.value,
-                            }))
-                          }
-                          rows={2}
-                          placeholder="Internal notes..."
-                          className="flex-1 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 outline-none focus:border-blue-500 transition-all resize-none"
-                        />
-                        <Btn
-                          size="sm"
-                          variant="primary"
-                          disabled={
-                            feedbackUpdateMutation.isPending ||
-                            (notesDrafts[fb.id] ?? fb.adminNotes ?? "") ===
-                              (fb.adminNotes ?? "")
-                          }
-                          onClick={() =>
-                            feedbackUpdateMutation.mutate({
-                              feedbackId: fb.id,
-                              data: {
-                                adminNotes: notesDrafts[fb.id] ?? "",
-                              },
-                            })
-                          }
-                        >
-                          Save
-                        </Btn>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex justify-end">
-                    <Btn
-                      variant="info"
-                      size="sm"
-                      onClick={() => {
-                        setReplyTarget(fb);
-                        setReplyMessage("");
-                      }}
-                      className="font-extrabold active:scale-95 cursor-pointer"
-                    >
-                      <Icon name="mail" size={14} />
-                      Reply via Email
-                    </Btn>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 shadow-sm">
-              <EmptyState
-                icon="star"
-                title="No feedback submitted"
-                desc="This user has not submitted any feedback yet."
-              />
-            </div>
-          )}
-        </div>
-      )}
-
       {emailOpen && (
         <ModalOverlay onClose={() => setEmailOpen(false)}>
           <ModalHeader
@@ -889,48 +695,6 @@ export default function AdminUserDetail() {
               }
             >
               {sendEmailMutation.isPending ? "Sending…" : "Send Email"}
-            </Btn>
-          </ModalFooter>
-        </ModalOverlay>
-      )}
-
-      {replyTarget && (
-        <ModalOverlay onClose={() => setReplyTarget(null)}>
-          <ModalHeader
-            title="Reply via Email"
-            sub={`Replying to: ${replyTarget.title}`}
-            onClose={() => setReplyTarget(null)}
-          />
-          <div>
-            <Label>Reply Message</Label>
-            <textarea
-              value={replyMessage}
-              onChange={(e) => setReplyMessage(e.target.value)}
-              rows={6}
-              placeholder="Your reply to the user..."
-              className="w-full px-4 py-2.5 text-sm font-sans rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs transition-all resize-none"
-            />
-            <p className="text-xs font-semibold text-slate-400 mt-1.5">
-              Sending the reply also marks this feedback as resolved.
-            </p>
-          </div>
-          <ModalFooter>
-            <Btn variant="ghost" onClick={() => setReplyTarget(null)}>
-              Cancel
-            </Btn>
-            <Btn
-              variant="primary"
-              disabled={
-                replyMutation.isPending || replyMessage.trim().length < 5
-              }
-              onClick={() =>
-                replyMutation.mutate({
-                  feedbackId: replyTarget.id,
-                  message: replyMessage,
-                })
-              }
-            >
-              {replyMutation.isPending ? "Sending…" : "Send Reply"}
             </Btn>
           </ModalFooter>
         </ModalOverlay>

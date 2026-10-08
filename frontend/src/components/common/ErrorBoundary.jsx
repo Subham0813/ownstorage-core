@@ -20,7 +20,6 @@ function extractUserContext() {
   const user = getStoredUser();
   return {
     userId: user?.id ?? null,
-    plan: user?.plan ?? null,
     role: user?.role ?? null,
   };
 }
