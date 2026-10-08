@@ -37,7 +37,6 @@ import {
   EMAIL_PROVIDER,
   IS_SAAS_MODE,
 } from "./misc/constants.js";
-import requireSaasMode from "./middlewares/requireSaasMode.js";
 
 import { bandwidthWebhook } from "./services/bandwidthWebhook.js";
 
@@ -67,7 +66,7 @@ try {
   );
   
   app.use(express.json({ limit: "1mb" }));
-  app.post("/api/files/webhook", globalLimiter, requireSaasMode, bandwidthWebhook);
+  app.post("/api/files/webhook", globalLimiter, bandwidthWebhook);
 
   app.use("/api/auth", authLimiter, authRoutes);
   app.use("/api/oauth", authLimiter, oauthRoutes);

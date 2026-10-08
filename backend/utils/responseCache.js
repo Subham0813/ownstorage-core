@@ -60,8 +60,8 @@ export async function cacheDel(key) {
 }
 
 /**
- * Bust every per-user response-cache key (info/usage/stats/plan). Call after
- * any mutating operation that changes a user's quota, plan, profile or stats.
+ * Bust every per-user response-cache key (info/usage/stats). Call after
+ * any mutating operation that changes a user's quota, profile or stats.
  * Accepts an ObjectId or a string id.
  */
 export async function invalidateUser(userId) {
@@ -71,7 +71,6 @@ export async function invalidateUser(userId) {
       cacheDel(cacheNs.user("info", uid)),
       cacheDel(cacheNs.user("usage", uid)),
       cacheDel(cacheNs.user("stats", uid)),
-      cacheDel(cacheNs.user("plan", uid)),
     ]);
   } catch (err) {
     console.error("ResponseCache: invalidateUser failed", err?.message);
@@ -81,7 +80,7 @@ export async function invalidateUser(userId) {
 /**
  * Cache-aside wrapper for controllers.
  *
- *   const payload = await cacheWrap("storageApp:cache:global:plans", 900, async () => { ... });
+ *   const payload = await cacheWrap("storageApp:cache:global:users", 900, async () => { ... });
  *
  * If a cached value exists it is returned immediately; otherwise `compute`
  * runs and its result is stored. Redis failures fall through to `compute`.

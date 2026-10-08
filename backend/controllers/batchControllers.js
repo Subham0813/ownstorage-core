@@ -40,7 +40,7 @@ export const bulkDownloadHandler = async (req, res, next) => {
     if (usedBandwidth >= bandwidthLimit) {
       return next(
         getErrorObject(
-          "Bandwidth limit exceeded. Please upgrade your plan.",
+          "Bandwidth limit exceeded. Try again later.",
           403,
         ),
       );

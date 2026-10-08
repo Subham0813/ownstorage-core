@@ -60,9 +60,6 @@ const box = (html, tone = "blue") => {
       </table>`;
 };
 
-const sectionLabel = (label) =>
-  `<p style="margin:22px 0 6px;font-family:'Segoe UI',Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;">${label}</p>`;
-
 /**
  * Shared shell for every email: brand header (logo + wordmark), body, footer.
  * @param {Object} opts
@@ -304,106 +301,6 @@ export const accountRecoveredTemplate = (username) => {
       subject: `Welcome back! Your account has been restored - ${appName}`,
       body,
       tone: "green",
-    }),
-  };
-};
-
-/* ───────────────────── 7. Feedback user confirmation ───────────────────── */
-
-const PROBLEM_CATEGORIES = [
-  "upload",
-  "preview",
-  "sharing",
-  "billing",
-  "performance",
-  "other",
-];
-
-export const feedbackUserConfirmationTemplate = (userName, category) => {
-  const isProblem = PROBLEM_CATEGORIES.includes(category);
-  const title = isProblem ? "We got your report!" : "Thanks for your feedback!";
-  const description = isProblem
-    ? `Thank you so much for taking the time to report this issue with ${escapeHtml(category)}. We know problems like this can be frustrating, so we really appreciate you letting us know. Our team is looking into it right now.`
-    : `Thank you so much for sharing your thoughts with us! We read every single piece of feedback we get, and it directly helps us decide what to build next.`;
-
-  const body = `
-    <p style="margin:0 0 6px;">Hi ${escapeHtml(userName)},</p>
-    ${box(escapeHtml(description), isProblem ? "amber" : "blue")}
-    <p style="margin:0 0 6px;">If we need any more details from you, we&rsquo;ll reply directly to this thread.</p>
-    ${signOff}
-  `;
-
-  return {
-    subject: `${title} - ${appName}`,
-    html: renderLayout({
-      title,
-      subject: `${title} - ${appName}`,
-      body,
-      tone: isProblem ? "amber" : "blue",
-    }),
-  };
-};
-
-/* ───────────────────── 11. Feedback admin alert ───────────────────── */
-
-export const feedbackAdminAlertTemplate = (
-  userEmail,
-  category,
-  title,
-  description,
-  screenshotUrl,
-) => {
-  const body = `
-    ${sectionLabel("New feedback received")}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#334155;">
-      <tr>
-        <td style="padding:4px 0;width:30%;color:#64748b;">From</td>
-        <td style="padding:4px 0;font-weight:600;">${escapeHtml(userEmail)}</td>
-      </tr>
-      <tr>
-        <td style="padding:4px 0;width:30%;color:#64748b;">Category</td>
-        <td style="padding:4px 0;font-weight:600;text-transform:capitalize;">${escapeHtml(category)}</td>
-      </tr>
-      <tr>
-        <td style="padding:4px 0;width:30%;color:#64748b;">Title</td>
-        <td style="padding:4px 0;font-weight:600;">${escapeHtml(title)}</td>
-      </tr>
-    </table>
-    ${box(escapeHtml(description), "amber")}
-    ${screenshotUrl
-      ? `<p style="margin:14px 0 0;font-family:Arial,sans-serif;font-size:13px;"><strong>Screenshot:</strong> <a href="${escapeHtml(screenshotUrl)}" target="_blank" style="color:#2563eb;text-decoration:none;">View Screenshot</a></p>`
-      : `<p style="margin:14px 0 0;font-family:Arial,sans-serif;font-size:13px;color:#64748b;"><em>No screenshot provided.</em></p>`}
-  `;
-
-  return {
-    subject: `🚨 New ${category.toUpperCase()}: ${title}`,
-    html: renderLayout({
-      title: "New Feedback Received",
-      subject: `New ${category.toUpperCase()}: ${title}`,
-      body,
-      tone: "amber",
-      footer: `Sent to admin inbox: ${escapeHtml(ADMIN_EMAIL)}`,
-    }),
-  };
-};
-
-/* ───────────────────── 12. Feedback reply ───────────────────── */
-
-export const feedbackReplyTemplate = (userName, feedbackTitle, message) => {
-  const body = `
-    <p style="margin:0 0 6px;">Hi ${escapeHtml(userName)},</p>
-    ${box(message.replace(/\n/g, "<br>"), "blue")}
-    <p style="margin:0 0 6px;">Thanks for helping us make ${escapeHtml(appName)} better!</p>
-    ${signOff}
-  `;
-
-  return {
-    subject: `Re: "${feedbackTitle}" - ${appName}`,
-    html: renderLayout({
-      title: "Response to your feedback",
-      subject: `Re: "${feedbackTitle}" - ${appName}`,
-      body,
-      tone: "blue",
     }),
   };
 };

@@ -6,7 +6,6 @@ import { UserFile } from "../models/user_file.model.js";
 import {
   sendAccountBannedEmail,
   sendAccountRecoveredEmail,
-  sendFeedbackReplyEmail,
   sendAdminDirectEmail,
 } from "../services/emailService.js";
 import { redisClient } from "../configs/redis.js";
@@ -14,7 +13,6 @@ import { invalidateUser } from "../utils/responseCache.js";
 import { deleteS3Objects } from "../services/s3Client.js";
 import { IS_SAAS_MODE } from "../misc/constants.js";
 import { Permission } from "../models/permission.model.js";
-import { Feedback } from "../models/feedback.model.js";
 import { quotaSchema } from "../schemas/userSchema.js";
 
 /**
@@ -33,7 +31,6 @@ export const getDashboardStats = async (req, res, next) => {
       activeUsers,
       storageResult,
       fileStats,
-      planBreakdown,
       recentUsers,
     ] = await Promise.all([
       User.countDocuments({}),
@@ -67,15 +64,9 @@ export const getDashboardStats = async (req, res, next) => {
         },
       ]),
 
-      User.aggregate([
-        { $match: { isDeleted: { $ne: true } } },
-        { $group: { _id: "$plan", count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-      ]),
-      
       User.find({})
         .select(
-          "name email role plan isDeleted lastLogin lastActiveAt createdAt",
+          "name email role isDeleted lastLogin lastActiveAt createdAt",
         )
         .sort({ createdAt: -1 })
         .limit(limit)
@@ -88,24 +79,6 @@ export const getDashboardStats = async (req, res, next) => {
       isDeleted: { $ne: true },
     });
 
-    const aggregated = {};
-    const totalPlanUsers = planBreakdown.reduce((sum, p) => sum + p.count, 0);
-
-    planBreakdown.forEach((p) => {
-      const baseKey = p._id || "FREE";
-      if (!aggregated[baseKey]) aggregated[baseKey] = 0;
-      aggregated[baseKey] += p.count;
-    });
-
-    const planBreakdownFormatted = Object.entries(aggregated).map(
-      ([plan, count]) => ({
-        plan,
-        count,
-        percentage:
-          totalPlanUsers > 0 ? Math.round((count / totalPlanUsers) * 100) : 0,
-      }),
-    );
-
     return res.status(200).json({
       success: true,
       data: {
@@ -114,12 +87,10 @@ export const getDashboardStats = async (req, res, next) => {
         storageUsedBytes,
         totalFiles,
         totalDirs,
-        planBreakdown: planBreakdownFormatted,
         recentUsers: recentUsers.map((u) => ({
           id: u._id.toString(),
           name: u.name,
           email: u.email,
-          plan: u.plan,
           role: u.role,
           isDeleted: u.isDeleted,
           lastLogin: u.lastLogin,
@@ -178,12 +149,11 @@ export const getAllUsers = async (req, res, next) => {
       query.role = role;
     }
 
-    // sorting: name / date / plan / role, asc or desc (default newest first)
+    // sorting: name / date / role, asc or desc (default newest first)
     const sortOrder = req.query?.sortOrder?.toLowerCase() === "asc" ? 1 : -1;
     const sortFieldMap = {
       name: "name",
       date: "createdAt",
-      plan: "plan",
       role: "role",
     };
     const sortField =
@@ -611,149 +581,6 @@ export const deleteUser = async (req, res, next) => {
       success: true,
       message: "User deleted permanently and no longer available.",
       data: { user: { _id: user._id } },
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * path: /api/admin/feedback/:userId
- * what it do: List all feedback submissions for a user (newest first).
- */
-export const getUserFeedbacks = async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    if (!mongoose.isValidObjectId(userId))
-      return next(getErrorObject("Invalid user id."));
-
-    const userExists = await User.exists({ _id: userId });
-    if (!userExists) return next(getErrorObject("User not found.", 404));
-
-    const rawLimit = parseInt(req.query?.limit, 10);
-    const limit = Number.isFinite(rawLimit)
-      ? Math.min(Math.max(rawLimit, 1), 50)
-      : 20;
-    const feedbacks = await Feedback.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
-
-    const data = feedbacks.map((f) => ({
-      id: f._id.toString(),
-      category: f.category,
-      title: f.title,
-      description: f.description,
-      status: f.status,
-      adminNotes: f.adminNotes,
-      screenshotUrl: f.screenshotKey
-        ? `${process.env.PUBLIC_BUCKET_CDN}/${f.screenshotKey}`
-        : null,
-      createdAt: f.createdAt,
-    }));
-
-    return res.status(200).json({ success: true, data: { feedbacks: data } });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * path: /api/admin/feedback/:feedbackId
- * what it do: Update feedback status and/or admin notes.
- */
-export const updateFeedback = async (req, res, next) => {
-  try {
-    const { feedbackId } = req.params;
-    if (!mongoose.isValidObjectId(feedbackId))
-      return next(getErrorObject("Invalid feedback id."));
-
-    const { status, adminNotes } = req.body || {};
-
-    if (status === undefined && adminNotes === undefined)
-      return next(
-        getErrorObject(
-          "Provide at least one field: status or adminNotes.",
-          400,
-        ),
-      );
-
-    const update = {};
-    if (status !== undefined) {
-      if (!["pending", "reviewed", "resolved"].includes(status))
-        return next(getErrorObject("Invalid feedback status."));
-      update.status = status;
-    }
-    if (adminNotes !== undefined) {
-      if (typeof adminNotes !== "string" || adminNotes.length > 2000)
-        return next(
-          getErrorObject("adminNotes must be a string under 2000 characters."),
-        );
-      update.adminNotes = adminNotes;
-    }
-
-    const feedback = await Feedback.findByIdAndUpdate(
-      feedbackId,
-      { $set: update },
-      { new: true },
-    ).lean();
-    if (!feedback) return next(getErrorObject("Feedback not found.", 404));
-
-    return res.status(200).json({
-      success: true,
-      message: "Feedback updated.",
-      data: { feedback },
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * path: /api/admin/feedback/:feedbackId/reply
- * what it do: Email the user a reply to their feedback and mark it resolved.
- */
-export const replyToFeedback = async (req, res, next) => {
-  try {
-    const { feedbackId } = req.params;
-    const { message, status } = req.body || {};
-
-    if (!message || message.trim().length < 5)
-      return next(
-        getErrorObject("Reply message must be at least 5 characters."),
-      );
-    if (message.trim().length > 5000)
-      return next(
-        getErrorObject("Reply message cannot exceed 5000 characters."),
-      );
-    if (!mongoose.isValidObjectId(feedbackId))
-      return next(getErrorObject("Invalid feedback id."));
-
-    if (
-      status !== undefined &&
-      !["pending", "reviewed", "resolved"].includes(status)
-    )
-      return next(getErrorObject("Invalid feedback status."));
-
-    const feedback = await Feedback.findById(feedbackId).lean();
-    if (!feedback) return next(getErrorObject("Feedback not found.", 404));
-
-    const user = await User.findById(feedback.userId)
-      .select("name email")
-      .lean();
-    if (!user) return next(getErrorObject("User not found.", 404));
-
-    await sendFeedbackReplyEmail(user, feedback, message.trim());
-
-    const newStatus = status || "resolved";
-    await Feedback.findByIdAndUpdate(feedbackId, {
-      $set: { status: newStatus },
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Reply emailed to the user.",
-      data: { status: newStatus },
     });
   } catch (err) {
     next(err);

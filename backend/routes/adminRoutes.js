@@ -5,13 +5,10 @@ import {
   getDashboardStats,
   getAllUsers,
   getSingleUser,
-  getUserFeedbacks,
   logoutUser,
   recoverUser,
-  replyToFeedback,
   sendUserEmail,
   tempRemoveUser,
-  updateFeedback,
   updateUserQuota,
 } from "../controllers/adminControllers.js";
 import { getUserStats } from "../controllers/userControllers.js";
@@ -24,10 +21,6 @@ router.get("/users", getAllUsers);
 router.get("/user/:id", getSingleUser);
 router.get("/user/:id/storage", getUserStats);
 router.post("/user/:id/email", sendUserEmail);
-
-router.get("/feedback/:userId", getUserFeedbacks);
-router.patch("/feedback/:feedbackId", updateFeedback);
-router.post("/feedback/:feedbackId/reply", replyToFeedback);
 
 // super-admin can promote/demote all users, admins are restricted to user and guests
 router.patch("/user/:id/role", changeUserRole);

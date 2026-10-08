@@ -17,7 +17,7 @@ export const loadParentDir = async (req, res, next) => {
       target = await Directory.findById(targetId)
         .populate({
           path: "userId",
-          select: "_id name email maxQuota root plan",
+          select: "_id name email maxQuota root",
           populate: { path: "root", select: "size" },
         })
         .select("userId path publicRole dirname")

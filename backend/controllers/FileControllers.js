@@ -44,7 +44,7 @@ export const previewFileHandler = async (req, res, next) => {
     if (usedBandwidth >= bandwidthLimit) {
       return next(
         getErrorObject(
-          "Bandwidth limit exceeded. Please upgrade your plan.",
+          "Bandwidth limit exceeded. Try again later.",
           403,
         ),
       );
@@ -126,7 +126,7 @@ export const downloadFileHandler = async (req, res, next) => {
     if (usedBandwidth >= bandwidthLimit) {
       return next(
         getErrorObject(
-          "Bandwidth limit exceeded. Please upgrade your plan.",
+          "Bandwidth limit exceeded. Try again later.",
           403,
         ),
       );

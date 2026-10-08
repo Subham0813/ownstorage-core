@@ -2,16 +2,11 @@ import { Queue, Worker } from "bullmq";
 import { User } from "../models/user.model.js";
 import { UserFile } from "../models/user_file.model.js";
 import { Directory } from "../models/directory.model.js";
-import { PLAN_DETAILS } from "../misc/constants.js";
 import { redisClient } from "../configs/redis.js";
 import { invalidateUser } from "../utils/responseCache.js";
 import { deleteS3Objects } from "../services/s3Client.js";
 import { createNotification } from "../services/notificationService.js";
 import { getBandwidthResetAt } from "../utils/bandwidthWindow.js";
-import {
-  getActivePublicBytes,
-  revokePublicLinksOverCap,
-} from "../utils/publicShare.js";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import connectMongoose from "../configs/connect.js";
 
@@ -420,50 +415,6 @@ export const startBullMQWorker = () => {
 
           break;
 
-        case "public-share-reaper": {
-          const capBytes = PLAN_DETAILS["FREE"].maxPublicShareBytes;
-          const dueUsers = await User.find({
-            publicShareGraceEndsAt: { $lte: now, $ne: null },
-          })
-            .select("_id")
-            .lean();
-
-          let reaped = 0;
-          for (const user of dueUsers) {
-            const activeBytes = await getActivePublicBytes(user._id);
-            if (activeBytes <= capBytes) {
-              await User.updateOne(
-                { _id: user._id },
-                { $unset: { publicShareGraceEndsAt: 1 } },
-              );
-              continue;
-            }
-
-            const revoked = await revokePublicLinksOverCap(user._id, capBytes);
-            if (revoked.length > 0) {
-              await User.updateOne(
-                { _id: user._id },
-                { $unset: { publicShareGraceEndsAt: 1 } },
-              );
-              await redisClient.del(`storageApp:user:${user._id}:userdata`);
-              await invalidateUser(user._id);
-              await createNotification({
-                userId: user._id,
-                type: "system",
-                title: "Public links removed",
-                message:
-                  "Your public links were over the FREE plan's 2 GB total limit, so the oldest ones were turned off automatically.",
-                link: "/myfiles",
-              });
-              reaped += 1;
-            }
-          }
-          console.log(
-            `Public-share reaper: processed ${dueUsers.length} grace users, revoked overflow for ${reaped}.`,
-          );
-          break;
-        }
-
         case "active-users-sweeper": {
           // console.log("Running Active Users Sweeper...");
           const cutoff = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
@@ -619,12 +570,6 @@ export const startBullMQJobs = async () => {
       {},
       { ...JOB_OPTS, repeat: { pattern: "*/30 * * * *" } },
     );
-    await backgroundQueue.add(
-      "public-share-reaper",
-      {},
-      { ...JOB_OPTS, repeat: { pattern: "30 0 * * *" } }, // daily at 00:30
-    );
-
     // Only start consuming AFTER schedulers are (re)registered
     startBullMQWorker();
   } catch (err) {

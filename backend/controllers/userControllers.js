@@ -23,13 +23,11 @@ import {
 import { User } from "../models/user.model.js";
 import { UserFile } from "../models/user_file.model.js";
 import { Directory } from "../models/directory.model.js";
-import { feedbackSchema, nameSchema } from "../schemas/authSchema.js";
+import { nameSchema } from "../schemas/authSchema.js";
 import { uploadCompleteSchema } from "../schemas/userSchema.js";
 import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { t, THUMBNAIL_SIZE } from "../misc/constants.js";
 import { Permission } from "../models/permission.model.js";
-import { Feedback } from "../models/feedback.model.js";
-import { processFeedbackEmails } from "../services/emailService.js";
 
 export const getUserInfo = async (req, res, next) => {
   try {
@@ -576,97 +574,6 @@ export const emptyTrash = async (req, res, next) => {
     next(err);
   } finally {
     await session.endSession();
-  }
-};
-
-export const feedbackHandler = async (req, res, next) => {
-  try {
-    const { success, data, error } = feedbackSchema.safeParse(req.body);
-    if (!success) return next(getErrorObject(error.issues[0].message));
-
-    // Tiered rate limit: FREE 2/week, PRO 5/week, BUSINESS 10/week (fixed 7d window)
-    const tierLimits = { FREE: 2, PRO: 5, BUSINESS: 10 };
-    const basePlan = (req.user.plan || "FREE").split("_")[0].toUpperCase();
-    const limit = tierLimits[basePlan] ?? 2;
-    try {
-      const fbKey = `storageApp:feedback:${req.user._id.toString()}:count`;
-      const count = await redisClient.incr(fbKey);
-      if (count === 1) await redisClient.expire(fbKey, 7 * 24 * 3600);
-      if (count > limit) {
-        await redisClient.decr(fbKey);
-        const ttl = await redisClient.ttl(fbKey);
-        const days = ttl > 0 ? Math.ceil(ttl / 86400) : 7;
-        if (basePlan === "FREE") {
-          return next(
-            getErrorObject(
-              `Free plan limit: 2 feedbacks per week.Resets in ${days}d.`,
-              429,
-            ),
-          );
-        }
-        return next(
-          getErrorObject(
-            `Limit ${limit}/week for ${basePlan}. Please email us the issue/s or try again in ${days}d.`,
-            429,
-          ),
-        );
-      }
-    } catch (rlErr) {
-      console.error("Feedback rate-limit error (fail-open):", rlErr?.message);
-      return next(
-        getErrorObject("Too many requests. Please try again later.", 429),
-      );
-    }
-
-    const { category, title, description, screenshotBase64 } = data;
-    let screenshotKey = null;
-
-    if (screenshotBase64) {
-      const base64Data = screenshotBase64.replace(
-        /^data:image\/\w+;base64,/,
-        "",
-      );
-      const buffer = Buffer.from(base64Data, "base64");
-
-      if (buffer.length > THUMBNAIL_SIZE) {
-        return next(getErrorObject("Screenshot must be less than 1MB."));
-      }
-
-      screenshotKey = `feedback/${req.user._id.toString()}/${Date.now()}.webp`;
-
-      await s3PublicClient.send(
-        new PutObjectCommand({
-          Bucket: PUBLIC_BUCKET_NAME,
-          Key: screenshotKey,
-          Body: buffer,
-          ContentType: "image/webp",
-          // Tagging: "type=feedback",
-        }),
-      );
-    }
-    const screenshotUrl = `${process.env.PUBLIC_BUCKET_CDN}/${screenshotKey}`;
-
-    await Feedback.create({
-      userId: req.user._id,
-      category,
-      title,
-      description,
-      screenshotKey,
-    });
-    processFeedbackEmails(
-      req.user,
-      category,
-      title,
-      description,
-      screenshotUrl,
-    ).catch(console.error);
-
-    return res.status(201).json({
-      success: true,
-      message: "Bug report submitted successfully.",
-    });
-  } catch (err) {
-    next(err);
   }
 };
 

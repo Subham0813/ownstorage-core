@@ -20,7 +20,6 @@ import {
   deleteIntegration,
   deleteProfileHandler,
   emptyTrash,
-  feedbackHandler,
   getActiveSessionsHandler,
   getUsage,
   getUserInfo,
@@ -33,7 +32,6 @@ import {
 } from "../controllers/userControllers.js";
 
 import { checkAuthProviderStatus } from "../middlewares/restrictOperations.js";
-import requireSaasMode from "../middlewares/requireSaasMode.js";
 import { getErrorObject, getUserPayload } from "../utils/helper.js";
 
 const router = Router();
@@ -74,7 +72,6 @@ router.get(
   githubOAuthHandler,
 );
 
-router.post("/feedback", requireSaasMode, feedbackHandler);
 router.patch("/update-name", updateName);
 
 router.put("/update-avatar", updateAvatar);

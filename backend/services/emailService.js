@@ -7,9 +7,6 @@ import {
   accessRevokedEmailTemplate,
   accountBannedTemplate,
   accountRecoveredTemplate,
-  feedbackUserConfirmationTemplate,
-  feedbackAdminAlertTemplate,
-  feedbackReplyTemplate,
   adminDirectEmailTemplate,
 } from "../utils/emailTemplates.js";
 
@@ -239,80 +236,6 @@ const sendBulkEmails = async (emails, buildTemplate) => {
   } catch (error) {
     console.error(`Failed to send bulk notification emails:`, error.message);
     return [];
-  }
-};
-
-export const processFeedbackEmails = async (
-  user,
-  category,
-  title,
-  description,
-  screenshotUrl,
-) => {
-  if (!IS_SAAS_MODE) return null;
-
-  try {
-    const userTemplate = feedbackUserConfirmationTemplate(
-      user.name || "there",
-      category,
-    );
-    const adminTemplate = feedbackAdminAlertTemplate(
-      user.email,
-      category,
-      title,
-      description,
-      screenshotUrl,
-    );
-
-    const response = await Promise.allSettled([
-      // 1. Send confirmation to the user
-      sendMail({
-        to: user.email,
-        subject: userTemplate.subject,
-        html: userTemplate.html,
-      }),
-      // 2. Send alert to the app owner's inbox
-      sendMail({
-        to: ADMIN_EMAIL,
-        subject: adminTemplate.subject,
-        html: adminTemplate.html,
-      }),
-    ]);
-    return response;
-  } catch (error) {
-    console.error(
-      `Failed to process feedback emails for ${user.email}:`,
-      error.message,
-    );
-    return null;
-  }
-};
-
-/**
- * Send an admin reply to a user's feedback submission
- * @param {Object} user - { name, email }
- * @param {Object} feedback - feedback document ({ title })
- * @param {string} message - custom reply message from the admin
- */
-export const sendFeedbackReplyEmail = async (user, feedback, message) => {
-  if (!IS_SAAS_MODE) return null;
-
-  try {
-    const template = feedbackReplyTemplate(user.name || "there", feedback.title, message);
-
-    const response = await sendMail({
-      to: user.email,
-      subject: template.subject,
-      html: template.html,
-    });
-
-    if (response?.error) {
-      throw new Error(`Mail provider error: ${response.error.message}`);
-    }
-    return response;
-  } catch (error) {
-    console.error(`Failed to send feedback reply to ${user.email}:`, error.message);
-    throw error;
   }
 };
 

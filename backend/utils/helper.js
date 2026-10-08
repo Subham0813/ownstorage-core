@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { EMAIL_PROVIDER, INSTANCE_CONFIG, IS_SAAS_MODE, PLAN_DETAILS, requiredEnvVars, smtpEnvVars, t } from "../misc/constants.js";
+import { EMAIL_PROVIDER, INSTANCE_CONFIG, IS_SAAS_MODE, DEFAULT_TRASH_RETENTION_DAYS, requiredEnvVars, smtpEnvVars, t } from "../misc/constants.js";
 import { Permission } from "../models/permission.model.js";
 import { redisClient } from "../configs/redis.js";
 
@@ -84,15 +84,7 @@ export const getUserPayload = async (user) => {
   safeUser.authProviders = safeUser?.authProviders?.join("&");
   safeUser.id = _id.toString();
 
-  const { ...limits } =
-    PLAN_DETAILS[user.plan || "FREE"];
-
-  if (!IS_SAAS_MODE) {
-    limits.canCreatePublicLinks = true;
-    limits.maxPublicShareBytes = null;
-    limits.maxPublicShareFileBytes = null;
-  }
-  safeUser.limits = limits;
+  safeUser.limits = getUserLimits(user);
 
   try {
     const [active, logged] = await Promise.all([
@@ -200,7 +192,7 @@ export const getUserLimits = (user) => {
     maxFileSize: INSTANCE_CONFIG.maxFileSize || 50e9,
     chunkSize: INSTANCE_CONFIG.chunkSize || 5e6,
     maxUploadConcurrency: INSTANCE_CONFIG.maxUploadConcurrency || 4,
-    trashRetentionDays: PLAN_DETAILS.FREE.trashRetentionDays,
+    trashRetentionDays: DEFAULT_TRASH_RETENTION_DAYS,
     canCreatePublicLinks: true,
     maxPublicShareBytes: null,
     maxPublicShareFileBytes: null,

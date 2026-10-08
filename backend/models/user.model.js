@@ -79,11 +79,6 @@ const userSchema = new Schema(
       enum: ["super_admin", "admin", "manager", "user"],
       default: "user",
     },
-    plan: {
-      type: String,
-      enum: ["FREE", "PRO", "BUSINESS"],
-      default: "FREE",
-    },
 
     maxQuota: { type: Number, default: null },
 
@@ -103,7 +98,6 @@ const userSchema = new Schema(
     gracePeriodEndsAt: { type: Date, default: null },
     isAgeConfirmed: { type: Boolean, default: false },
     termsAgreedAt: { type: Date, default: null },
-    publicShareGraceEndsAt: { type: Date, default: null },
   },
   { strict: "throw", timestamps: true },
 );

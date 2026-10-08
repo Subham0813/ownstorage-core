@@ -105,11 +105,6 @@ await db.command({
           enum: ["super_admin", "admin", "manager", "user"],
           description: "Role assigned to the user.",
         },
-        plan: {
-          bsonType: "string",
-          enum: ["FREE", "PRO", "BUSINESS"],
-          description: "Plan/tier assigned to the user.",
-        },
         isTwoFactorEnabled: {
           bsonType: "bool",
           description: "Flag for two-factor authentication.",
@@ -189,10 +184,6 @@ await db.command({
         termsAgreedAt: {
           bsonType: ["date", "null"],
           description: "Timestamp of terms & privacy policy agreement.",
-        },
-        publicShareGraceEndsAt: {
-          bsonType: ["date", "null"],
-          description: "Timestamp when public share grace period ends.",
         },
         createdAt: {
           bsonType: "date",
@@ -578,72 +569,6 @@ await db.command({
         link: {
           bsonType: "string",
           description: "Optional deep link for the notification.",
-        },
-        createdAt: { bsonType: "date", description: "Creation timestamp." },
-        updatedAt: { bsonType: "date", description: "Update timestamp." },
-        __v: { bsonType: "int", description: "Mongoose versioning key." },
-      },
-      additionalProperties: false,
-    },
-  },
-  validationLevel: "strict",
-  validationAction: "error",
-});
-
-/**
- * 7. FEEDBACKS COLLECTION
- */
-await db.command({
-  [command]: "feedbacks",
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: ["userId", "category", "title", "description"],
-      properties: {
-        _id: {
-          bsonType: "objectId",
-          description: "Unique identifier for this feedback record.",
-        },
-        userId: {
-          bsonType: "objectId",
-          description: "User who submitted the feedback.",
-        },
-        category: {
-          bsonType: "string",
-          enum: [
-            "upload",
-            "preview",
-            "sharing",
-            "billing",
-            "performance",
-            "other",
-          ],
-          description: "Feedback category.",
-        },
-        title: {
-          bsonType: "string",
-          minLength: 5,
-          maxLength: 200,
-          description: "Feedback title.",
-        },
-        description: {
-          bsonType: "string",
-          minLength: 10,
-          maxLength: 2000,
-          description: "Feedback description.",
-        },
-        screenshotKey: {
-          bsonType: ["string", "null"],
-          description: "Optional screenshot attached to the feedback.",
-        },
-        status: {
-          bsonType: "string",
-          enum: ["pending", "reviewed", "resolved"],
-          description: "Admin review status.",
-        },
-        adminNotes: {
-          bsonType: ["string", "null"],
-          description: "Admin notes on the feedback.",
         },
         createdAt: { bsonType: "date", description: "Creation timestamp." },
         updatedAt: { bsonType: "date", description: "Update timestamp." },

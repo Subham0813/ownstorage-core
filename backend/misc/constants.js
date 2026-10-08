@@ -33,49 +33,8 @@ export const EXPORT_MAP = {
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 };
 
-export const PLAN_DETAILS = {
-  FREE: {
-    quotaBytes: 2 * 1e9, // 2GB
-    maxFileSize: 2 * 1e9, // 2GB
-    chunkSize: 8e6,
-    monthlyBandwidthLimit: 5 * 1e9, // 5GB
-    maxUploadConcurrency: 2,
-    maxDevices: 1,
-    canCreatePublicLinks: true,
-    maxPublicShareBytes: 2 * 1e9, // 2GB aggregate across all public links
-    maxPublicShareFileBytes: 500 * 1e6, // 500MB single file public share
-    trashRetentionDays: 5,
-    gracePeriod: 7,
-  },
+export const DEFAULT_TRASH_RETENTION_DAYS = 5;
 
-  // PRO — 100 GB Tier (self-hosted admin assigns the plan directly)
-  PRO: {
-    quotaBytes: 100 * 1e9, // 100GB
-    maxFileSize: 2 * 1e9, // 2GB
-    chunkSize: 16e6,
-    monthlyBandwidthLimit: 200 * 1e9, // 200GB
-    maxUploadConcurrency: 4,
-    maxDevices: 3,
-    canCreatePublicLinks: true,
-    trashRetentionDays: 15,
-    gracePeriod: 14,
-  },
-
-  // BUSINESS — 500 GB Tier
-  BUSINESS: {
-    quotaBytes: 500 * 1e9, // 500GB
-    maxFileSize: 10 * 1e9, // 10GB
-    chunkSize: 16e6,
-    monthlyBandwidthLimit: 1000 * 1e9, // 1000GB
-    maxUploadConcurrency: 8,
-    maxDevices: 5,
-    canCreatePublicLinks: true,
-    trashRetentionDays: 30,
-    gracePeriod: 30,
-  },
-};
-
-// Core variables the server must have to boot safely (all modes).
 // These are validated at startup in app.js — the process exits with a clear
 // message if any are missing from the environment.
 export const requiredEnvVars = [
@@ -137,38 +96,5 @@ export const fmtSize = (bytes) => {
   return `${Math.round(gb * 1000)} MB`;
 };
 
-export const PLAN_TAGLINES = {
-  FREE: "Perfect for light, personal storage",
-  PRO: "Serious space for everyday use.",
-  BUSINESS: "Maximum capacity for teams & studios.",
-};
-export const PLAN_FEATURE_LISTS = {
-  FREE: [
-    "Private personal vault storage",
-    "2x Parallel upload concurrency",
-    "Single device active access",
-    "Direct Google Drive cloud import",
-    "5-day automatic trash recovery",
-    "7-day post-expiry data grace period",
-  ],
-  PRO: [
-    "Public link sharing with custom expiry",
-    "4x High-speed concurrent uploads",
-    "Multi-device sync across 3 devices",
-    "Google Drive cloud migration",
-    "15-day trash auto-recovery window",
-    "14-day post-expiry data grace period",
-  ],
-  BUSINESS: [
-    "Full public link sharing & team tools",
-    "8x Ultra-fast parallel upload engine",
-    "Multi-device sync across 5 devices",
-    "Google Drive bulk cloud migration",
-    "30-day extended trash retention",
-    "30-day post-expiry data grace period",
-  ],
-};
-
-export const basePlans = ["FREE", "PRO", "BUSINESS"];
-export const MAX_USER_QUOTA = PLAN_DETAILS.FREE.quotaBytes;
-export const MAX_USER_BANDWIDTH = PLAN_DETAILS.FREE.monthlyBandwidthLimit;
+export const MAX_USER_QUOTA = 2 * 1e9; // 2GB default storage quota (self-host)
+export const MAX_USER_BANDWIDTH = 5 * 1e9; // 5GB default monthly bandwidth (self-host)
