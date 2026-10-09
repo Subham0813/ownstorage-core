@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import Icon from "../ui/Icon";
+import SafeImage from "../ui/SafeImage";
 import { ConfirmModal } from "../ui/UI";
 import NotificationBell from "./NotificationBell";
 import SearchModal from "../search/SearchModal";
@@ -202,15 +203,12 @@ export default function TopBar({ onMenuToggle }) {
             <div
               className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm"
             >
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
+              <SafeImage
+                  src={user?.avatarUrl}
+                  alt={user?.name || "User"}
                   className="w-full h-full rounded-full object-cover"
+                  fallback={initials}
                 />
-              ) : (
-                initials
-              )}
             </div>
             <Icon
               name="chevronDown"
@@ -228,15 +226,12 @@ export default function TopBar({ onMenuToggle }) {
                   <div
                     className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-xs"
                   >
-                    {user?.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt={user.name}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      initials
-                    )}
+                    <SafeImage
+                      src={user?.avatarUrl}
+                      alt={user?.name || "User"}
+                      className="w-full h-full rounded-full object-cover"
+                      fallback={initials}
+                    />
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-slate-900 dark:text-zinc-100 truncate">

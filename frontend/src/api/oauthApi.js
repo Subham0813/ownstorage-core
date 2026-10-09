@@ -7,8 +7,19 @@ import axiosInstance from "./axiosInstance";
  * All connect endpoints are browser redirects (window.location.href),
  * NOT axios calls — they use 302 redirects to the provider.
  */
+const CALLBACK_PATHS = ["/google", "/github", "/google-drive", "/auth/google"];
+
+const isCallbackPath = (path) =>
+  typeof path === "string" &&
+  (path.startsWith("/auth/callback") || CALLBACK_PATHS.includes(path));
+
 const redirectWithOrigin = (url) => {
-  sessionStorage.setItem("oauthOrigin", window.location.pathname);
+  // Retrying from the callback error screen would otherwise record the
+  // callback route itself as the origin and loop back into it on success.
+  const path = window.location.pathname;
+  if (!isCallbackPath(path)) {
+    sessionStorage.setItem("oauthOrigin", path);
+  }
   window.location.href = url;
 };
 

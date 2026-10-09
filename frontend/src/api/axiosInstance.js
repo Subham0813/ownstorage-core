@@ -124,8 +124,14 @@ axiosInstance.interceptors.response.use(
     const isPublicSharePage = /^\/(share|file|folders|s)\//.test(
       window.location.pathname,
     );
+    // Already on an auth page — a 401 here (e.g. the OAuth 2FA profile prefill,
+    // which legitimately has no session cookie yet) must not bounce us into a
+    // window.location.href="/signin" self-reload loop.
+    const isAuthPage = ["/signin", "/register"].includes(
+      window.location.pathname,
+    );
 
-    if (status === 401 && !isLogoutEndpoint && !isPublicApiCall && !isPublicSharePage && !window.location.pathname.startsWith("/auth/callback")) {
+    if (status === 401 && !isLogoutEndpoint && !isPublicApiCall && !isPublicSharePage && !isAuthPage && !window.location.pathname.startsWith("/auth/callback")) {
       localStorage.removeItem("userdata");
       if (globalShowMessage) globalShowMessage("error", errorMessage);
       setTimeout(() => {

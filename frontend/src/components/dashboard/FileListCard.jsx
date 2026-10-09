@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Icon, FileIcon } from "../ui/Icon";
 import { Tooltip } from "../ui/Tooltip";
+import SafeImage from "../ui/SafeImage";
 import { useItemCard } from "../../hooks/useItemCard";
 import { formatSize, getExtColor, timeAgo } from "../../utils/fileUtils";
 
@@ -95,16 +96,13 @@ export const FileListCard = memo(function FileListCard({
               : { backgroundColor: `${color}18`, borderColor: `${color}30` }
           }
         >
-          {item.thumbnailUrl && !isDir ? (
-            <img
-              src={item.thumbnailUrl}
-              alt={item.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <FileIcon ext={item.extension} isDir={isDir} size={20} />
-          )}
+          <SafeImage
+            src={isDir ? null : item.thumbnailUrl}
+            alt={item.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            fallback={<FileIcon ext={item.extension} isDir={isDir} size={20} />}
+          />
         </div>
       </Tooltip>
 

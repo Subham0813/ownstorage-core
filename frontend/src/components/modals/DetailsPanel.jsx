@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { directoryAPI } from "../../api/directoryApi";
 import { fileAPI } from "../../api/fileApi";
 import { Icon, FileIcon } from "../ui/Icon";
+import SafeImage from "../ui/SafeImage";
 import { formatSize, formatDate, getExtColor } from "../../utils/fileUtils";
 
 export function DetailsPanel({
@@ -72,11 +73,19 @@ export function DetailsPanel({
             <div className="flex flex-col items-center text-center px-4 pt-6 pb-4 bg-slate-50/50 dark:bg-zinc-950/20">
               {!isDir && data.thumbnailUrl ? (
                 <div className="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-zinc-800 mb-3.5 border border-slate-200/60 dark:border-zinc-700/60 shadow-xs">
-                  <img
+                  <SafeImage
                     src={data.thumbnailUrl}
                     alt={data.name}
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    fallback={
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ backgroundColor: `${color}18`, color }}
+                      >
+                        <FileIcon ext={data.extension} isDir={isDir} size={32} />
+                      </div>
+                    }
                   />
                 </div>
               ) : (
@@ -121,6 +130,7 @@ export function DetailsPanel({
                 )}
                 <Row label="Created" value={formatDate(data.createdAt)} />
                 <Row label="Modified" value={formatDate(data.updatedAt)} />
+                <Row label="Shared" value={formatDate(data.sharedAt)} />
                 {data.owner ? (
                   <Row label="Owner" value={data.owner.name || "Unknown"} />
                 ) : data.userId ? (
@@ -130,6 +140,15 @@ export function DetailsPanel({
                   />
                 ) : null}
                 <Row label="Location" value={"/" + fullPath.join("/")} mono />
+                <Row
+                  label="Link valid"
+                  value={
+                    formatDate(data.shareTokenExpiresAt) !== "—"
+                      ? formatDate(data.shareTokenExpiresAt)
+                      : "Forever"
+                  }
+                  mono
+                />
                 {isDir && (
                   <Row
                     label="Access"

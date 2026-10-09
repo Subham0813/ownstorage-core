@@ -62,6 +62,19 @@ const PROVIDER_CONNECT = {
 
 const ERROR_CODES = Object.keys(ERROR_MESSAGES);
 
+const CALLBACK_PATHS = ["/google", "/github", "/google-drive", "/auth/google"];
+
+const isCallbackPath = (path) =>
+  typeof path === "string" &&
+  (path === "/auth/callback" ||
+    path.startsWith("/auth/callback/") ||
+    CALLBACK_PATHS.includes(path));
+
+function getOrigin() {
+  const raw = sessionStorage.getItem("oauthOrigin");
+  return raw && !isCallbackPath(raw) ? raw : null;
+}
+
 function detectProvider() {
   const path = window.location.pathname;
   if (path.includes("google-drive")) return "google-drive";
@@ -83,11 +96,11 @@ export default function OAuthCallback() {
 
   const provider = detectProvider();
   const meta = PROVIDER_META[provider] || PROVIDER_META.google;
-  const origin = sessionStorage.getItem("oauthOrigin");
+  const origin = getOrigin();
 
   const goBack = useCallback(() => {
     sessionStorage.removeItem("oauthOrigin");
-    navigate(origin && origin !== "/auth/callback" ? origin : "/signin", {
+    navigate(origin || "/signin", {
       replace: true,
     });
   }, [navigate, origin]);
@@ -105,7 +118,7 @@ export default function OAuthCallback() {
       setUser(res.data?.data?.user);
       showMessage("success", `Successfully connected with ${meta.name}!`);
       sessionStorage.removeItem("oauthOrigin");
-      navigate(origin && origin !== "/auth/callback" ? origin : "/myfiles", {
+      navigate(origin || "/myfiles", {
         replace: true,
       });
     } catch (err) {
@@ -163,10 +176,7 @@ export default function OAuthCallback() {
           setUser(user);
           showMessage("success", `Successfully connected with ${meta.name}!`);
           sessionStorage.removeItem("oauthOrigin");
-          navigate(
-            origin && origin !== "/auth/callback" ? origin : "/myfiles",
-            { replace: true },
-          );
+          navigate(origin || "/myfiles", { replace: true });
         })
         .catch((err) => {
           const errMsg =

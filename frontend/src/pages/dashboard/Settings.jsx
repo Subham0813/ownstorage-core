@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApp } from "../../context/AppContext";
 import { Icon } from "../../components/ui/Icon";
+import SafeImage from "../../components/ui/SafeImage";
 import { Btn, SectionCard, ConfirmModal } from "../../components/ui/UI";
 import { PageBanner } from "../../components/ui/PageBanner";
 import TwoFactorModal from "../../components/modals/TwoFactorModal";
@@ -160,15 +161,12 @@ export default function Settings () {
             onClick={() => setShowAvatar(true)}
           >
             <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 flex items-center justify-center text-white text-lg font-black overflow-hidden shadow-md shadow-blue-500/20 border-2 border-white dark:border-zinc-800">
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                getInitials(user?.name)
-              )}
+              <SafeImage
+                src={user?.avatarUrl}
+                alt={user?.name}
+                className="w-full h-full object-cover"
+                fallback={getInitials(user?.name)}
+              />
             </div>
             {/* <div className="absolute inset-0 bg-black/60 backdrop-blur-xs rounded-xl flex flex-col items-center justify-center gap-0.5 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer z-20">
               <Icon

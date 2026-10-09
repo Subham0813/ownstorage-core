@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Icon } from "../../components/ui/Icon";
+import SafeImage from "../../components/ui/SafeImage";
 import {
   Btn,
   ConfirmModal,
@@ -243,17 +244,16 @@ export default function AdminUserDetail() {
 
       <div className="relative overflow-hidden rounded-xl border border-blue-500/25 bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-purple-500/15 dark:from-blue-900/60 dark:via-indigo-950/40 dark:to-purple-950/60 px-5 sm:px-6 py-4 text-slate-900 dark:text-white shadow-md">
         <div className="relative z-10 flex flex-wrap items-center gap-3 sm:gap-4">
-          {user.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt={user.name}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-white dark:border-zinc-800 shadow-md shrink-0"
-            />
-          ) : (
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 text-white font-black text-base sm:text-lg flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-              {initials}
-            </div>
-          )}
+          <SafeImage
+            src={user.avatarUrl}
+            alt={user.name}
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-white dark:border-zinc-800 shadow-md shrink-0"
+            fallback={
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-200 dark:ring-blue-900/60 text-white font-black text-base sm:text-lg flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                {initials}
+              </div>
+            }
+          />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">

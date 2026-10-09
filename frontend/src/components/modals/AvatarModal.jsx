@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ModalOverlay, ModalHeader, ModalFooter, Btn } from "../ui/UI";
 import { Icon } from "../ui/Icon";
+import SafeImage from "../ui/SafeImage";
 import { useApp } from "../../context/AppContext";
 import { homeAPI } from "../../api/userApi";
 import { getInitials } from "../../utils/fileUtils";
@@ -113,14 +114,13 @@ export function AvatarModal({ isOpen, onClose }) {
                 alt="New avatar"
                 className="w-full h-full object-cover"
               />
-            ) : user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
+            ) : (
+              <SafeImage
+                src={user?.avatarUrl}
                 alt={user?.name}
                 className="w-full h-full object-cover"
+                fallback={getInitials(user?.name)}
               />
-            ) : (
-              getInitials(user?.name)
             )}
           </div>
           {saving && (
