@@ -55,9 +55,13 @@ export const FolderCard = memo(function FolderCard({
   const displayMeta = metaText ?? countsText;
   const displayTime = timeText ?? formattedTime;
 
+  // When a caller supplies its own meta text it already encodes size, so only
+  // surface the folder size separately for the default (My Files / Shared) bar.
+  const folderSize = !metaText && item.size > 0 ? formatSize(item.size) : null;
+
   const metaParts = [];
   if (displayMeta) metaParts.push(displayMeta);
-  if (!metaText && item.size) metaParts.push(formatSize(item.size));
+  if (folderSize) metaParts.push(folderSize);
   const detailedTooltip = metaParts.join(" · ");
 
   const ACCENTS = {
@@ -123,7 +127,7 @@ export const FolderCard = memo(function FolderCard({
       role="button"
       aria-selected={isSelected}
       data-item-id={item.id}
-      className={`group relative p-2.5 sm:p-3 h-24 rounded-2xl border transition-[transform,box-shadow,border-color,background-color] duration-200 cursor-pointer select-none flex flex-col justify-between gap-1.5 outline-none hover:z-30 [content-visibility:auto] [contain-intrinsic-size:auto_6rem] ${
+      className={`group relative p-2.5 sm:p-3 h-24 rounded-2xl border transition-[transform,box-shadow,border-color,background-color] duration-200 cursor-pointer select-none flex flex-col justify-around gap-0 outline-none hover:z-30 [content-visibility:auto] [contain-intrinsic-size:auto_6rem] ${
         /* isSelected ? selectedClasses : */ idleClasses
       } ${pending ? "opacity-70" : ""}`}
     >
@@ -193,47 +197,58 @@ export const FolderCard = memo(function FolderCard({
         )}
       </div>
 
-      {/* Bottom Row: Metadata + Quick Actions + More */}
-      <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100 dark:border-zinc-800/80">
-        {pending && (
-          <span className="inline-flex items-center gap-1 text-blue-500 dark:text-blue-400 font-bold">
-            <span className="w-3 h-3 border border-blue-500/40 border-t-blue-500 rounded-full animate-spin" />
-            Syncing
-          </span>
+      {/* Bottom Row: Size + Badge, then Metadata + Quick Actions + More */}
+      <div className="flex flex-col gap-1">
+        {!pending && (folderSize || badge) && (
+          <div className="flex items-center justify-between gap-2 pt-1">
+            {folderSize && (
+              <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 font-mono truncate min-w-0">
+                {folderSize}
+              </span>
+            )}
+            {badge && <span className="shrink-0">{badge}</span>}
+          </div>
         )}
-        {!pending && badge && <>{badge}</>}
-        {!pending && (
-        <p className="text-xs sm:text-xs font-medium text-slate-400 dark:text-zinc-400 truncate min-w-0 flex-1 font-mono">
-          {displayMeta}
-        </p>
-        )}
+        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100 dark:border-zinc-800/80">
+          {pending && (
+            <span className="inline-flex items-center gap-1 text-blue-500 dark:text-blue-400 font-bold">
+              <span className="w-3 h-3 border border-blue-500/40 border-t-blue-500 rounded-full animate-spin" />
+              Syncing
+            </span>
+          )}
+          {!pending && (
+            <p className="text-xs sm:text-xs font-medium text-slate-400 dark:text-zinc-400 truncate min-w-0 flex-1 font-mono">
+              {displayMeta}
+            </p>
+          )}
 
-        <div className="flex items-center gap-0.5 shrink-0">
-          {onShowDetails && (
-            <Tooltip content="Details" position="top">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowDetails(item);
-                }}
-                aria-label="Details"
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              >
-                <Icon name="info" size={15} />
-              </button>
-            </Tooltip>
-          )}
-          {onContextMenu && (
-            <Tooltip content="More actions" position="top-right">
-              <button
-                onClick={handleMenuClick}
-                aria-label="More options"
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-[color,background-color] duration-150 cursor-pointer shrink-0"
-              >
-                <Icon name="moreHorizontal" size={15} />
-              </button>
-            </Tooltip>
-          )}
+          <div className="flex items-center gap-0.5 shrink-0">
+            {onShowDetails && (
+              <Tooltip content="Details" position="top">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowDetails(item);
+                  }}
+                  aria-label="Details"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <Icon name="info" size={15} />
+                </button>
+              </Tooltip>
+            )}
+            {onContextMenu && (
+              <Tooltip content="More actions" position="top-right">
+                <button
+                  onClick={handleMenuClick}
+                  aria-label="More options"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-[color,background-color] duration-150 cursor-pointer shrink-0"
+                >
+                  <Icon name="moreHorizontal" size={15} />
+                </button>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </div>
     </div>

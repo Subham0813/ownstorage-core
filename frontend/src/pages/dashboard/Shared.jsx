@@ -14,6 +14,7 @@ import {
 } from "../../utils/itemActions";
 import { useApp } from "../../context/AppContext";
 import { useFolderContents } from "../../hooks/useFolderContents";
+import { timeAgo } from "../../utils/fileUtils";
 import { useBreadcrumbs } from "../../hooks/useDirectoryInfo";
 import { useItemSelection } from "../../hooks/useItemSelection";
 import { useContextMenuState } from "../../hooks/useContextMenuState";
@@ -787,6 +788,9 @@ export default function Shared() {
                   </h3>
                   <FileGrid
                     items={files}
+                    timeText={(item) =>
+                      timeAgo(item.sharedAt || item.updatedAt || item.createdAt)
+                    }
                     /* selectedIds={selectedIds}  Shelved */
                     /* onSelect={handleSelect}     Shelved */
                     onOpen={handleOpen}

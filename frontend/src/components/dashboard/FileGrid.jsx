@@ -59,6 +59,7 @@ export const FileGrid = memo(function FileGrid({
           onContextMenu={onContextMenu}
           onAction={onAction}
           badge={renderBadge?.(item)}
+          timeText={timeText?.(item)}
           pending={item._pending}
         />
       ))}
