@@ -16,5 +16,10 @@ const notificationSchema = new Schema(
 
 notificationSchema.index({ userId: 1, createdAt: -1 });
 notificationSchema.index({ userId: 1, read: 1 });
+// TTL: auto-delete notifications 30 days after creation.
+notificationSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 30 * 24 * 60 * 60 },
+);
 
 export const Notification = model("Notification", notificationSchema);

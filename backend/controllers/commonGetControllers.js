@@ -295,20 +295,34 @@ export const getSharedWith = (model) => {
       const nextCursor =
         items.length < limit ? null : items[items.length - 1]._id;
 
-      const itemDocs = items.map((f) => {
-        const i = getFileDoc(f);
-        delete i.isStarred;
-        delete i.isDeleted;
-        delete i.shareDisabled;
-        delete i.accessCount;
-        delete i.lastModifiedBy;
-        delete i.lastAccessedAt;
-        delete i.publicBy;
-        // The shared item itself IS the recipient's visible root, so its
-        // owner-side ancestor chain must never be exposed ("path" trace leak).
-        i.path = [];
-        return i;
-      });
+      const itemDocs = await Promise.all(
+        items.map(async (f) => {
+          const i = getFileDoc(f);
+          // Mirror the owner's folder listing: expose immediate child counts so
+          // shared folder cards show the same metadata bar as My Files.
+          if (model === "dir") {
+            i.filesCount = await UserFile.countDocuments({
+              parentId: f._id,
+              isDeleted: false,
+            });
+            i.dirsCount = await Directory.countDocuments({
+              parentId: f._id,
+              isDeleted: false,
+            });
+          }
+          delete i.isStarred;
+          delete i.isDeleted;
+          delete i.shareDisabled;
+          delete i.accessCount;
+          delete i.lastModifiedBy;
+          delete i.lastAccessedAt;
+          delete i.publicBy;
+          // The shared item itself IS the recipient's visible root, so its
+          // owner-side ancestor chain must never be exposed ("path" trace leak).
+          i.path = [];
+          return i;
+        }),
+      );
       return res.status(200).json({
         success: true,
         data: { items: itemDocs, nextCursor },
@@ -369,7 +383,22 @@ export const getSharedBy = (model) => {
       const nextCursor =
         items.length < limit ? null : items[items.length - 1]._id;
 
-      const itemDocs = items.map((f) => getFileDoc(f));
+      const itemDocs = await Promise.all(
+        items.map(async (f) => {
+          const i = getFileDoc(f);
+          if (model === "dir") {
+            i.filesCount = await UserFile.countDocuments({
+              parentId: f._id,
+              isDeleted: false,
+            });
+            i.dirsCount = await Directory.countDocuments({
+              parentId: f._id,
+              isDeleted: false,
+            });
+          }
+          return i;
+        }),
+      );
 
       return res
         .status(200)

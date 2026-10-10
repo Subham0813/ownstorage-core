@@ -568,7 +568,7 @@ export const shareAccess = (model) => {
             _id: req.params.id,
             isDeleted: false,
           })
-            .select("_id name userId publicRole size")
+            .select("_id name userId publicRole size sharedAt")
             .populate("userId")
             .session(session)
             .lean());
@@ -584,6 +584,11 @@ export const shareAccess = (model) => {
             .map((e) => e.email.toLowerCase().trim()) || [];
 
         const query = { $set: { lastModifiedBy: req.user._id } };
+        // `sharedAt` marks when an item FIRST entered a shared state. It is set
+        // only on that first share and left untouched by later share edits
+        // (adding users, changing roles) so it stays a stable "shared since"
+        // timestamp. Revoking all access clears it (see revokeAccess).
+        const isFirstShare = !item.sharedAt;
 
         if (emails && emails.length > 0) {
           const targetUsers = await User.find({ email: { $in: emails } })
@@ -629,16 +634,17 @@ export const shareAccess = (model) => {
             query.$set = {
               accessLevel: "shared",
             };
+            if (isFirstShare) query.$set.sharedAt = new Date();
           }
         }
 
         if (publicRole) {
           query.$set = {
             publicRole: publicRole,
-            sharedAt: new Date(),
             publicBy: req.user._id,
             accessLevel: "public",
           };
+          if (isFirstShare) query.$set.sharedAt = new Date();
 
           if (expiresIn) {
             query.$set.shareTokenExpiresAt = new Date(Date.now() + expiresIn);
@@ -744,7 +750,7 @@ export const revokeAccess = (model) => {
             _id: req.params.id,
             isDeleted: false,
           })
-            .select("_id userId")
+            .select("_id userId publicRole")
             .session(session)
             .lean());
 
@@ -779,15 +785,24 @@ export const revokeAccess = (model) => {
           query.$set.publicRole = publicRole;
           query.$set.shareTokenExpiresAt = null;
           query.$set.shareToken = null;
-          query.$set.sharedAt = null;
           query.$set.publicBy = null;
         }
 
         const permissionRemains = await Permission.countDocuments({
           itemId: item._id,
         });
-        if (permissionRemains === 0 && publicRole === "none")
+        // An item is fully un-shared once it has no permission grants AND no
+        // active public role. Only then do we clear `sharedAt` (so a partial
+        // revoke that still leaves other collaborators keeps the original
+        // "shared since" timestamp) and drop it back to private.
+        const finalPublicRole = publicRole ?? item.publicRole;
+        if (
+          permissionRemains === 0 &&
+          (!finalPublicRole || finalPublicRole === "none")
+        ) {
           query.$set["accessLevel"] = "private";
+          query.$set.sharedAt = null;
+        }
 
         updatedItem = await Model.findByIdAndUpdate(item._id, query, {
           session,
